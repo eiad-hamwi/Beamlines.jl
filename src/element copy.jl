@@ -24,7 +24,7 @@ function Base.setindex!(h::ParamDict, v::AbstractParams, key::Type{<:AbstractPar
   # ==================================================================
 end
 
-@kwdef struct LatElement
+@kwdef struct LineElement
   pdict::ParamDict = ParamDict(UniversalParams => UniversalParams(MattStandard(), 0.0))
 end
 
@@ -50,7 +50,7 @@ mutable struct UniversalParams{T<:TrackingMethod, U<:Number} <: AbstractParams
   L::U
 end
 
-function Base.getproperty(ele::LatElement, key::Symbol)
+function Base.getproperty(ele::LineElement, key::Symbol)
   if key == :pdict
     return getfield(ele, :pdict)
   elseif haskey(PARAMS_MAP, key) # To get AbstractParams struct
@@ -60,7 +60,7 @@ function Base.getproperty(ele::LatElement, key::Symbol)
   end
 end
 
-function Base.setproperty!(ele::LatElement, key::Symbol, value)
+function Base.setproperty!(ele::LineElement, key::Symbol, value)
   # Using immutable structs via Accessors.jl: time to update is 452 ns with 7 allocations, regardless of type change
   # ele.pdict[PARAMS_FIELDS_MAP[key]] = set(ele.pdict[PARAMS_FIELDS_MAP[key]], opcompose(PropertyLens(key)), value)
 

@@ -24,12 +24,12 @@ function Base.setindex!(h::ParamDict, v::AbstractParams, key::Type{<:AbstractPar
   # ==================================================================
 end
 
-@kwdef struct LatElement
+@kwdef struct LineElement
   pdict::ParamDict = ParamDict(UniversalParams => UniversalParams())
 end
 
-function LatElement(class::String; kwargs...)
-  ele = LatElement()
+function LineElement(class::String; kwargs...)
+  ele = LineElement()
   ele.class = class
   for (k, v) in kwargs
     setproperty!(ele, k, v)
@@ -56,7 +56,7 @@ end
 # For more complex params (e.g. BMultipoleParams) we will need custom override
 @inline replace(p::AbstractParams, key::Symbol, value) = set(pg, opcompose(PropertyLens(key)), value)
 
-function Base.getproperty(ele::LatElement, key::Symbol)
+function Base.getproperty(ele::LineElement, key::Symbol)
   if key == :pdict
     return getfield(ele, :pdict)
   elseif haskey(PARAMS_MAP, key) # To get AbstractParams struct
@@ -66,7 +66,7 @@ function Base.getproperty(ele::LatElement, key::Symbol)
   end
 end
 
-function Base.setproperty!(ele::LatElement, key::Symbol, value)
+function Base.setproperty!(ele::LineElement, key::Symbol, value)
   # Using immutable structs via Accessors.jl: time to update is 452 ns with 7 allocations, regardless of type change
   # ele.pdict[PARAMS_FIELDS_MAP[key]] = set(ele.pdict[PARAMS_FIELDS_MAP[key]], opcompose(PropertyLens(key)), value)
 
@@ -75,12 +75,12 @@ function Base.setproperty!(ele::LatElement, key::Symbol, value)
     setindex!(ele.pdict, value, PARAMS_MAP[key])
   else
     if !haskey(ele.pdict, PARAMS_FIELDS_MAP[key])
-      p = getindex(ele.pdict, PARAMS_FIELDS_MAP[key])
-      # Function barrier for speed
-      _setproperty!(ele.pdict, p, key, value)
-    else
-
+      # If the parameter struct associated with this symbol does not exist, create it
+      setindex!(ele.pdict, PARAMS_FIELDS_MAP[key](), PARAMS_FIELDS_MAP[key])
     end
+    p = getindex(ele.pdict, PARAMS_FIELDS_MAP[key])
+    # Function barrier for speed
+    _setproperty!(ele.pdict, p, key, value)
   end
 end
 
@@ -101,10 +101,10 @@ function _setproperty!(pdict::ParamDict, p::AbstractParams, key::Symbol, value)
   return pdict[PARAMS_FIELDS_MAP[key]] = replace(p, key, value)
 end
 
-#Base.fieldnames(::Type{LatElement}) = tuple(:pdict, keys(PARAMS_FIELDS_MAP)..., keys(PARAMS_MAP)...)
-#Base.fieldnames(::LatElement) = tuple(:pdict, keys(PARAMS_FIELDS_MAP)..., keys(PARAMS_MAP)...)
-#Base.propertynames(::Type{LatElement}) = tuple(:pdict, keys(PARAMS_FIELDS_MAP)..., keys(PARAMS_MAP)...)
-#Base.propertynames(::LatElement) = tuple(:pdict, keys(PARAMS_FIELDS_MAP)..., keys(PARAMS_MAP)...)
+#Base.fieldnames(::Type{LineElement}) = tuple(:pdict, keys(PARAMS_FIELDS_MAP)..., keys(PARAMS_MAP)...)
+#Base.fieldnames(::LineElement) = tuple(:pdict, keys(PARAMS_FIELDS_MAP)..., keys(PARAMS_MAP)...)
+#Base.propertynames(::Type{LineElement}) = tuple(:pdict, keys(PARAMS_FIELDS_MAP)..., keys(PARAMS_MAP)...)
+#Base.propertynames(::LineElement) = tuple(:pdict, keys(PARAMS_FIELDS_MAP)..., keys(PARAMS_MAP)...)
 
 const PARAMS_FIELDS_MAP = Dict{Symbol,Type{<:AbstractParams}}(
   :Kn0 =>  BMultipoleParams,

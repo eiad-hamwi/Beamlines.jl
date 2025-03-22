@@ -1,5 +1,5 @@
 module Beamlines
-export MattStandard, AbstractParams, LatElement, Bunch, make_lat, track!, ParamDict, UniversalParams, BMultipoleParams, BMultipole
+export MattStandard, AbstractParams, LineElement, Bunch, make_lat, track!, ParamDict, UniversalParams, BMultipoleParams, BMultipole
 
 using GTPSA, Accessors
 import GTPSA: sincu, sinhcu
@@ -21,7 +21,7 @@ end
 
 function make_lat(n::Integer=1; Kn1=0.36, L_quad=0.5, L_drift=1.)
   function make_matt_ele(Kn1, L)
-    ele = LatElement()
+    ele = LineElement()
     ele.QuadParams = QuadParams(Kn1, 0.)
     ele.LengthParams = LengthParams(L)
     return ele
@@ -33,7 +33,7 @@ function make_lat(n::Integer=1; Kn1=0.36, L_quad=0.5, L_drift=1.)
   return lat
 end
 
-function track!(bunch::Bunch, lat::Vector{<:LatElement})
+function track!(bunch::Bunch, lat::Vector{<:LineElement})
   tmp = zero(bunch.x)
   for ele in lat
     track!(bunch, ele, tmp)
@@ -41,7 +41,7 @@ function track!(bunch::Bunch, lat::Vector{<:LatElement})
   return bunch
 end
 
-function track!(bunch::Bunch, ele::LatElement, tmp=nothing)
+function track!(bunch::Bunch, ele::LineElement, tmp=nothing)
   return track!(bunch, ele.tracking_method, ele.params, tmp) # Function barrier technique
 end
 
