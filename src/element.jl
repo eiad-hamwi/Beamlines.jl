@@ -38,10 +38,12 @@ function LineElement(class::String; kwargs...)
 end
 
 # Common class choices
+Solenoid(; kwargs...)   = LineElement("Solenoid"; kwargs...)
 Quadrupole(; kwargs...) = LineElement("Quadrupole"; kwargs...)
 Sextupole(; kwargs...)  = LineElement("Sextupole"; kwargs...)
 Drift(; kwargs...)      = LineElement("Drift"; kwargs...)
 Octupole(; kwargs...)   = LineElement("Octupole"; kwargs...)
+Multipole(; kwargs...)  = LineElement("Multipole"; kwargs...)
 Marker(; kwargs...)     = LineElement("Marker"; kwargs...)
 
 include("multipole.jl")

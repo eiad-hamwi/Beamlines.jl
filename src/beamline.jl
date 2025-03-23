@@ -42,6 +42,9 @@ function Base.getproperty(bp::BeamlineParams, key::Symbol)
   elseif key in (:s, :s_downstream)
     if key == :s
       n = bp.beamline_index - 1
+      if n == 0
+        return 0.0
+      end
     else
       n = bp.beamline_index
     end

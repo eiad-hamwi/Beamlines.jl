@@ -1,8 +1,3 @@
-# Beamlines
-
-[![Build Status](https://github.com/mattsignorelli/Beamlines.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/mattsignorelli/Beamlines.jl/actions/workflows/CI.yml?query=branch%3Amain)
-
-```julia
 using Beamlines, BenchmarkTools, GTPSA
 
 # This only needs to be specified if we input normalized field strengths
@@ -47,4 +42,4 @@ d1.L += ΔL
 # Now we can see that s and s_downstream are also TPSA variables:
 qd.s
 qd.s_downstream
-```
+
