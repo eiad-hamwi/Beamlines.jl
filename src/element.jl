@@ -37,32 +37,47 @@ function LineElement(class::String; kwargs...)
   return ele
 end
 
+# Common class choices
+Quadrupole(; kwargs...) = LineElement("Quadrupole"; kwargs...)
+Sextupole(; kwargs...)  = LineElement("Sextupole"; kwargs...)
+Drift(; kwargs...)      = LineElement("Drift"; kwargs...)
+Octupole(; kwargs...)   = LineElement("Octupole"; kwargs...)
+Marker(; kwargs...)     = LineElement("Marker"; kwargs...)
+
 include("multipole.jl")
 
-abstract type TrackingMethod end
-struct MattStandard <: TrackingMethod end
+# These should be in tracking package instead
+struct MattStandard end
 # This is just a first idea for handling tracking open to suggestions
-struct DiffEq <: TrackingMethod
+struct DiffEq
   ds::Float64
 end
 
-@kwdef mutable struct UniversalParams{T<:TrackingMethod, U<:Number} <: AbstractParams
+@kwdef mutable struct UniversalParams{T, U<:Number} <: AbstractParams
   tracking_method::T = MattStandard()
   L::U               = 0.0
   class::String      = "Marker"
 end
 
+include("beamline.jl")
+
 # Use Accessors here for default bc super convenient for replacing entire (even mutable) type
 # For more complex params (e.g. BMultipoleParams) we will need custom override
-@inline replace(p::AbstractParams, key::Symbol, value) = set(pg, opcompose(PropertyLens(key)), value)
+replace(p::AbstractParams, key::Symbol, value) = set(p, opcompose(PropertyLens(key)), value)
+
+include("virtual.jl")
 
 function Base.getproperty(ele::LineElement, key::Symbol)
   if key == :pdict
     return getfield(ele, :pdict)
   elseif haskey(PARAMS_MAP, key) # To get AbstractParams struct
     return getindex(ele.pdict, PARAMS_MAP[key])
-  else  # To get a specific parameter in a parameter struct
+  elseif haskey(PARAMS_FIELDS_MAP, key)  # To get a specific parameter in a parameter struct
     return getproperty(getindex(ele.pdict, PARAMS_FIELDS_MAP[key]), key)
+  elseif haskey(VIRTUAL_GETTER_MAP, key)
+    return VIRTUAL_GETTER_MAP[key](ele, key)
+  else
+    error("Type LineElement has no property $key")
   end
 end
 
@@ -71,16 +86,27 @@ function Base.setproperty!(ele::LineElement, key::Symbol, value)
   # ele.pdict[PARAMS_FIELDS_MAP[key]] = set(ele.pdict[PARAMS_FIELDS_MAP[key]], opcompose(PropertyLens(key)), value)
 
   # With mutable structs time to update is ~65 ns with 3 allocations
-  if haskey(PARAMS_MAP, key)
+  if haskey(PARAMS_MAP, key) # Setting whole parameter struct
     setindex!(ele.pdict, value, PARAMS_MAP[key])
-  else
+  elseif haskey(PARAMS_FIELDS_MAP, key)
     if !haskey(ele.pdict, PARAMS_FIELDS_MAP[key])
       # If the parameter struct associated with this symbol does not exist, create it
+      # This could be optimized in the future with a `place` function
+      # That is similar to `replace` but just has the type
+      # Though adding fields is not done very often so is fine
       setindex!(ele.pdict, PARAMS_FIELDS_MAP[key](), PARAMS_FIELDS_MAP[key])
     end
     p = getindex(ele.pdict, PARAMS_FIELDS_MAP[key])
     # Function barrier for speed
-    _setproperty!(ele.pdict, p, key, value)
+    @noinline _setproperty!(ele.pdict, p, key, value)
+  elseif haskey(VIRTUAL_SETTERS_MAP, key)
+
+  else
+    if haskey(VIRTUAL_GETTER_MAP, key)
+      error("LineElement property $key is read-only")
+    else
+      error("Type LineElement has no property $key")
+    end
   end
 end
 
@@ -107,28 +133,28 @@ end
 #Base.propertynames(::LineElement) = tuple(:pdict, keys(PARAMS_FIELDS_MAP)..., keys(PARAMS_MAP)...)
 
 const PARAMS_FIELDS_MAP = Dict{Symbol,Type{<:AbstractParams}}(
-  :Kn0 =>  BMultipoleParams,
-  :Kn1 =>  BMultipoleParams,
-  :Kn2 =>  BMultipoleParams,
-  :Kn3 =>  BMultipoleParams,
-  :Kn4 =>  BMultipoleParams,
-  :Kn5 =>  BMultipoleParams,
-  :Kn6 =>  BMultipoleParams,
-  :Kn7 =>  BMultipoleParams,
-  :Kn8 =>  BMultipoleParams,
-  :Kn9 =>  BMultipoleParams,
-  :Kn10 => BMultipoleParams,
-  :Kn11 => BMultipoleParams,
-  :Kn12 => BMultipoleParams,
-  :Kn13 => BMultipoleParams,
-  :Kn14 => BMultipoleParams,
-  :Kn15 => BMultipoleParams,
-  :Kn16 => BMultipoleParams,
-  :Kn17 => BMultipoleParams,
-  :Kn18 => BMultipoleParams,
-  :Kn19 => BMultipoleParams,
-  :Kn20 => BMultipoleParams,
-  :Kn21 => BMultipoleParams,
+  :Bn0 =>  BMultipoleParams,
+  :Bn1 =>  BMultipoleParams,
+  :Bn2 =>  BMultipoleParams,
+  :Bn3 =>  BMultipoleParams,
+  :Bn4 =>  BMultipoleParams,
+  :Bn5 =>  BMultipoleParams,
+  :Bn6 =>  BMultipoleParams,
+  :Bn7 =>  BMultipoleParams,
+  :Bn8 =>  BMultipoleParams,
+  :Bn9 =>  BMultipoleParams,
+  :Bn10 => BMultipoleParams,
+  :Bn11 => BMultipoleParams,
+  :Bn12 => BMultipoleParams,
+  :Bn13 => BMultipoleParams,
+  :Bn14 => BMultipoleParams,
+  :Bn15 => BMultipoleParams,
+  :Bn16 => BMultipoleParams,
+  :Bn17 => BMultipoleParams,
+  :Bn18 => BMultipoleParams,
+  :Bn19 => BMultipoleParams,
+  :Bn20 => BMultipoleParams,
+  :Bn21 => BMultipoleParams,
 
   :tilt0 =>  BMultipoleParams,
   :tilt1 =>  BMultipoleParams,
@@ -155,10 +181,16 @@ const PARAMS_FIELDS_MAP = Dict{Symbol,Type{<:AbstractParams}}(
 
   :L => UniversalParams,
   :tracking_method => UniversalParams,
-  :class => UniversalParams
+  :class => UniversalParams,
+
+  :beamline => BeamlineParams,
+  :beamline_index => BeamlineParams,
+  :E_ref => BeamlineParams,
+  :Brho => BeamlineParams, 
 )
 
 const PARAMS_MAP = Dict{Symbol,Type{<:AbstractParams}}(
   :BMultipoleParams => BMultipoleParams,
   :UniversalParams => UniversalParams,
+  :BeamlineParams => BeamlineParams,
 )

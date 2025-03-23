@@ -1,8 +1,26 @@
 module Beamlines
-export MattStandard, AbstractParams, LineElement, Bunch, make_lat, track!, ParamDict, UniversalParams, BMultipoleParams, BMultipole
+export MattStandard, 
+       AbstractParams, 
+       LineElement, 
+       Bunch, 
+       make_lat, 
+       track!, 
+       ParamDict, 
+       UniversalParams, 
+       BMultipoleParams, 
+       BMultipole,
+       Drift,
+       Quadrupole,
+       Sextupole,
+       Octupole,
+       Marker,
+       Beamline
 
 using GTPSA, Accessors
 import GTPSA: sincu, sinhcu
+
+# Reference energy in eV
+default_E_ref::Float64 = NaN
 
 include("utils.jl")
 include("element.jl")

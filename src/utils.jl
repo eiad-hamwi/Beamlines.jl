@@ -18,3 +18,7 @@ function sinhcu(z)
     return sinh(z) / z
   end
 end
+
+const Q = 1.602176634e-19 # C
+const C_LIGHT = 2.99792458e8 # m/s
+const M_ELECTRON = 0.51099895069 # eV/c^2

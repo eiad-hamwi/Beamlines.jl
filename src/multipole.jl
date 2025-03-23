@@ -1,12 +1,12 @@
 mutable struct BMultipole{T<:Number}
   order::Int
-  Kn::T       # Normalized field strength
+  Bn::T       #  field strength in T
   tilt::T
-  function BMultipole(order, Kn, tilt)
-    return new{promote_type(typeof(Kn),typeof(tilt))}(order, Kn, tilt)
+  function BMultipole(order, Bn, tilt)
+    return new{promote_type(typeof(Bn),typeof(tilt))}(order, Bn, tilt)
   end
-  function BMultipole{T}(order, Kn, tilt) where {T}
-    return new{T}(order, Kn, tilt)
+  function BMultipole{T}(order, Bn, tilt) where {T}
+    return new{T}(order, Bn, tilt)
   end
 end
 
@@ -39,12 +39,12 @@ end
 
 # Replace will copy the copy + change the type, and if the key is not provided
 # then it will add the multipole.
-@inline function replace(b::BMultipoleParams{S}, key::Symbol, value) where {S}
+function replace(b::BMultipoleParams{S}, key::Symbol, value) where {S}
   T = promote_type(S, typeof(value))
   ord, sym = BMULTIPOLE_KEY_MAP[key]
   bdict = BMultipoleDict{T}()
   for (order, bm) in b.bdict
-    bdict[order] = BMultipole{T}(order, bm.Kn, bm.tilt)
+    bdict[order] = BMultipole{T}(order, bm.Bn, bm.tilt)
   end
   if !haskey(bdict, ord)
     bdict[ord] = BMultipole{T}(ord, 0, 0)
@@ -73,6 +73,11 @@ function Base.setproperty!(bm::BMultipoleParams, key::Symbol, value)
   return setproperty!(b, sym, value)
 end
 
+# One question might be how to handle the input of :tilt with :Ks
+# This can be resolved by having a separate :dtilt symbol that adds
+# a tilt to the current multipole tilt.
+
+
 Base.hasproperty(b::BMultipoleParams, key::Symbol) = haskey(b.bdict, first(BMULTIPOLE_KEY_MAP[key]))
 
 #Base.fieldnames(::Type{<:BMultipoleParams}) = tuple(:bdict, keys(BMULTIPOLE_KEY_MAP)...)
@@ -85,29 +90,32 @@ Base.hasproperty(b::BMultipoleParams, key::Symbol) = haskey(b.bdict, first(BMULT
 #Base.getindex.(BMULTIPOLE_PROPERTIES_MAP, keys(b.bdict)...)
 #(BMULTIPOLE_PROPERTIES_MAP[key]... for key in keys(BMULTIPOLE_KEY_MAP)..., :bdict)
 
+# Technically these are virtual IO fields
+# But because they only use stuff within this parameter struct,
+# we can optimize
 const BMULTIPOLE_KEY_MAP = Dict{Symbol, Tuple{Int,Symbol}}(
-  :Kn0 =>  ( 0, :Kn), 
-  :Kn1 =>  ( 1, :Kn),
-  :Kn2 =>  ( 2, :Kn),
-  :Kn3 =>  ( 3, :Kn),
-  :Kn4 =>  ( 4, :Kn),
-  :Kn5 =>  ( 5, :Kn),
-  :Kn6 =>  ( 6, :Kn),
-  :Kn7 =>  ( 7, :Kn),
-  :Kn8 =>  ( 8, :Kn),
-  :Kn9 =>  ( 9, :Kn),
-  :Kn10 => (10, :Kn),
-  :Kn11 => (11, :Kn),
-  :Kn12 => (12, :Kn),
-  :Kn13 => (13, :Kn),
-  :Kn14 => (14, :Kn),
-  :Kn15 => (15, :Kn),
-  :Kn16 => (16, :Kn),
-  :Kn17 => (17, :Kn),
-  :Kn18 => (18, :Kn),
-  :Kn19 => (19, :Kn),
-  :Kn20 => (20, :Kn),
-  :Kn21 => (21, :Kn), 
+  :Bn0 =>  ( 0, :Bn), 
+  :Bn1 =>  ( 1, :Bn),
+  :Bn2 =>  ( 2, :Bn),
+  :Bn3 =>  ( 3, :Bn),
+  :Bn4 =>  ( 4, :Bn),
+  :Bn5 =>  ( 5, :Bn),
+  :Bn6 =>  ( 6, :Bn),
+  :Bn7 =>  ( 7, :Bn),
+  :Bn8 =>  ( 8, :Bn),
+  :Bn9 =>  ( 9, :Bn),
+  :Bn10 => (10, :Bn),
+  :Bn11 => (11, :Bn),
+  :Bn12 => (12, :Bn),
+  :Bn13 => (13, :Bn),
+  :Bn14 => (14, :Bn),
+  :Bn15 => (15, :Bn),
+  :Bn16 => (16, :Bn),
+  :Bn17 => (17, :Bn),
+  :Bn18 => (18, :Bn),
+  :Bn19 => (19, :Bn),
+  :Bn20 => (20, :Bn),
+  :Bn21 => (21, :Bn), 
 
   :tilt0 =>  ( 0, :tilt), 
   :tilt1 =>  ( 1, :tilt),
@@ -131,4 +139,31 @@ const BMULTIPOLE_KEY_MAP = Dict{Symbol, Tuple{Int,Symbol}}(
   :tilt19 => (19, :tilt),
   :tilt20 => (20, :tilt),
   :tilt21 => (21, :tilt), 
+)
+
+
+# These are FUNCTIONAL virtual parameters
+const BMULTIPOLE_VIRTUAL_MAP = Dict{Symbol,Symbol}(
+:Kn0 =>  :Bn0 ,
+:Kn1 =>  :Bn1 ,
+:Kn2 =>  :Bn2 ,
+:Kn3 =>  :Bn3 ,
+:Kn4 =>  :Bn4 ,
+:Kn5 =>  :Bn5 ,
+:Kn6 =>  :Bn6 ,
+:Kn7 =>  :Bn7 ,
+:Kn8 =>  :Bn8 ,
+:Kn9 =>  :Bn9 ,
+:Kn10 => :Bn10,
+:Kn11 => :Bn11,
+:Kn12 => :Bn12,
+:Kn13 => :Bn13,
+:Kn14 => :Bn14,
+:Kn15 => :Bn15,
+:Kn16 => :Bn16,
+:Kn17 => :Bn17,
+:Kn18 => :Bn18,
+:Kn19 => :Bn19,
+:Kn20 => :Bn20,
+:Kn21 => :Bn21,
 )
