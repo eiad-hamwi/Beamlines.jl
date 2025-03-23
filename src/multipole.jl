@@ -15,7 +15,7 @@ end
 const BMultipoleDict{T} = Dict{Int, BMultipole{T}} where {T<:Number}
 
 # Note the repetitive code - this means we can likely coalesce ParamDict and BMultipoleDict 
-# Into some single new Dict type.
+# Into some single new restricted Dict type.
 function Base.setindex!(h::BMultipoleDict, v::BMultipole, key::Int)
   v.order == key || error("Key $key does not match multipole order $(v.order)")
   # The following is copy-pasted directly from Base dict.jl ==========
@@ -34,7 +34,7 @@ function Base.setindex!(h::BMultipoleDict, v::BMultipole, key::Int)
 end
 
 @kwdef struct BMultipoleParams{T<:Number} <: AbstractParams
-  bdict::BMultipoleDict{T} = BMultipoleDict{Float64}(1 => BMultipole(1, 0.36, 0.)) # multipole coefficients
+  bdict::BMultipoleDict{T} = BMultipoleDict{Float64}() # multipole coefficients
 end
 
 # Replace will copy the copy + change the type, and if the key is not provided
@@ -139,31 +139,4 @@ const BMULTIPOLE_KEY_MAP = Dict{Symbol, Tuple{Int,Symbol}}(
   :tilt19 => (19, :tilt),
   :tilt20 => (20, :tilt),
   :tilt21 => (21, :tilt), 
-)
-
-
-# These are FUNCTIONAL virtual parameters
-const BMULTIPOLE_VIRTUAL_MAP = Dict{Symbol,Symbol}(
-:Kn0 =>  :Bn0 ,
-:Kn1 =>  :Bn1 ,
-:Kn2 =>  :Bn2 ,
-:Kn3 =>  :Bn3 ,
-:Kn4 =>  :Bn4 ,
-:Kn5 =>  :Bn5 ,
-:Kn6 =>  :Bn6 ,
-:Kn7 =>  :Bn7 ,
-:Kn8 =>  :Bn8 ,
-:Kn9 =>  :Bn9 ,
-:Kn10 => :Bn10,
-:Kn11 => :Bn11,
-:Kn12 => :Bn12,
-:Kn13 => :Bn13,
-:Kn14 => :Bn14,
-:Kn15 => :Bn15,
-:Kn16 => :Bn16,
-:Kn17 => :Bn17,
-:Kn18 => :Bn18,
-:Kn19 => :Bn19,
-:Kn20 => :Bn20,
-:Kn21 => :Bn21,
 )

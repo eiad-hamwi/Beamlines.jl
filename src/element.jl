@@ -68,13 +68,13 @@ replace(p::AbstractParams, key::Symbol, value) = set(p, opcompose(PropertyLens(k
 include("virtual.jl")
 
 function Base.getproperty(ele::LineElement, key::Symbol)
-  if key == :pdict
+  if key == :pdict 
     return getfield(ele, :pdict)
-  elseif haskey(PARAMS_MAP, key) # To get AbstractParams struct
+  elseif haskey(PARAMS_MAP, key) # To get parameters struct
     return getindex(ele.pdict, PARAMS_MAP[key])
-  elseif haskey(PARAMS_FIELDS_MAP, key)  # To get a specific parameter in a parameter struct
-    return getproperty(getindex(ele.pdict, PARAMS_FIELDS_MAP[key]), key)
-  elseif haskey(VIRTUAL_GETTER_MAP, key)
+  elseif haskey(PROPERTIES_MAP, key)  # To get a property in a parameter struct
+    return getproperty(getindex(ele.pdict, PROPERTIES_MAP[key]), key)
+  elseif haskey(VIRTUAL_GETTER_MAP, key) # To get a virtual element property
     return VIRTUAL_GETTER_MAP[key](ele, key)
   else
     error("Type LineElement has no property $key")
@@ -82,25 +82,21 @@ function Base.getproperty(ele::LineElement, key::Symbol)
 end
 
 function Base.setproperty!(ele::LineElement, key::Symbol, value)
-  # Using immutable structs via Accessors.jl: time to update is 452 ns with 7 allocations, regardless of type change
-  # ele.pdict[PARAMS_FIELDS_MAP[key]] = set(ele.pdict[PARAMS_FIELDS_MAP[key]], opcompose(PropertyLens(key)), value)
-
-  # With mutable structs time to update is ~65 ns with 3 allocations
   if haskey(PARAMS_MAP, key) # Setting whole parameter struct
     setindex!(ele.pdict, value, PARAMS_MAP[key])
-  elseif haskey(PARAMS_FIELDS_MAP, key)
-    if !haskey(ele.pdict, PARAMS_FIELDS_MAP[key])
+  elseif haskey(PROPERTIES_MAP, key)
+    if !haskey(ele.pdict, PROPERTIES_MAP[key])
       # If the parameter struct associated with this symbol does not exist, create it
       # This could be optimized in the future with a `place` function
       # That is similar to `replace` but just has the type
       # Though adding fields is not done very often so is fine
-      setindex!(ele.pdict, PARAMS_FIELDS_MAP[key](), PARAMS_FIELDS_MAP[key])
+      setindex!(ele.pdict, PROPERTIES_MAP[key](), PROPERTIES_MAP[key])
     end
-    p = getindex(ele.pdict, PARAMS_FIELDS_MAP[key])
+    p = getindex(ele.pdict, PROPERTIES_MAP[key])
     # Function barrier for speed
     @noinline _setproperty!(ele.pdict, p, key, value)
-  elseif haskey(VIRTUAL_SETTERS_MAP, key)
-
+  elseif haskey(VIRTUAL_SETTER_MAP, key)
+    return VIRTUAL_SETTER_MAP[key](ele, key, value)
   else
     if haskey(VIRTUAL_GETTER_MAP, key)
       error("LineElement property $key is read-only")
@@ -111,28 +107,21 @@ function Base.setproperty!(ele::LineElement, key::Symbol, value)
 end
 
 function _setproperty!(pdict::ParamDict, p::AbstractParams, key::Symbol, value)
-  #T = fieldtype(typeof(pg), key) 
-  #if typeof(value) == T # no promotion necessary
-     # Here and below, setproperty! causes one more allocation and ~10ns slower than setfield!, 
-     # but setproperty! should be used bc setproperty! can be extended.
-  #  return setproperty!(pg, key, value)
-  #else
-  # Can we put this value in the current mutable struct?
-  if hasproperty(p, key)
+  if hasproperty(p, key) # Check if we can put this value in current struct
     T = typeof(getproperty(p, key))
     if promote_type(typeof(value), T) == T 
       return setproperty!(p, key, value)
     end
   end
-  return pdict[PARAMS_FIELDS_MAP[key]] = replace(p, key, value)
+  return pdict[PROPERTIES_MAP[key]] = replace(p, key, value)
 end
 
-#Base.fieldnames(::Type{LineElement}) = tuple(:pdict, keys(PARAMS_FIELDS_MAP)..., keys(PARAMS_MAP)...)
-#Base.fieldnames(::LineElement) = tuple(:pdict, keys(PARAMS_FIELDS_MAP)..., keys(PARAMS_MAP)...)
-#Base.propertynames(::Type{LineElement}) = tuple(:pdict, keys(PARAMS_FIELDS_MAP)..., keys(PARAMS_MAP)...)
-#Base.propertynames(::LineElement) = tuple(:pdict, keys(PARAMS_FIELDS_MAP)..., keys(PARAMS_MAP)...)
+#Base.fieldnames(::Type{LineElement}) = tuple(:pdict, keys(PROPERTIES_MAP)..., keys(PARAMS_MAP)...)
+#Base.fieldnames(::LineElement) = tuple(:pdict, keys(PROPERTIES_MAP)..., keys(PARAMS_MAP)...)
+#Base.propertynames(::Type{LineElement}) = tuple(:pdict, keys(PROPERTIES_MAP)..., keys(PARAMS_MAP)...)
+#Base.propertynames(::LineElement) = tuple(:pdict, keys(PROPERTIES_MAP)..., keys(PARAMS_MAP)...)
 
-const PARAMS_FIELDS_MAP = Dict{Symbol,Type{<:AbstractParams}}(
+const PROPERTIES_MAP = Dict{Symbol,Type{<:AbstractParams}}(
   :Bn0 =>  BMultipoleParams,
   :Bn1 =>  BMultipoleParams,
   :Bn2 =>  BMultipoleParams,
@@ -187,6 +176,8 @@ const PARAMS_FIELDS_MAP = Dict{Symbol,Type{<:AbstractParams}}(
   :beamline_index => BeamlineParams,
   :E_ref => BeamlineParams,
   :Brho => BeamlineParams, 
+  :s => BeamlineParams,
+  :s_downstream => BeamlineParams,
 )
 
 const PARAMS_MAP = Dict{Symbol,Type{<:AbstractParams}}(
