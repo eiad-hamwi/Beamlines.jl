@@ -47,4 +47,13 @@ d1.L += ΔL
 # Now we can see that s and s_downstream are also TPSA variables:
 qd.s
 qd.s_downstream
+
+# Finally, we can even make E_ref a TPSA variable:
+ΔE_ref = @vars(D)[1]
+qf_new = Quadrupole(Kn1=0.36, L=0.5)
+bl_new = Beamline([qf_new], E_ref=Beamlines.default_E_ref+ΔE_ref)
+
+qf_new.Kn1 # Returns TPSA
+qf_new.Kn1 = 0.1
+qf_new.Bn1 # Now a TPSA variable too!
 ```
