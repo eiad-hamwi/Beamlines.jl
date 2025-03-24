@@ -3,7 +3,7 @@
 [![Build Status](https://github.com/mattsignorelli/Beamlines.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/mattsignorelli/Beamlines.jl/actions/workflows/CI.yml?query=branch%3Amain)
 
 ```julia
-using Beamlines, BenchmarkTools, GTPSA
+using Beamlines, GTPSA
 
 # This only needs to be specified if we input normalized field strengths
 Beamlines.default_E_ref = 18e9 # 18 GeV
@@ -67,4 +67,47 @@ bl.E_ref += ΔE
 
 # Now e.g. normalized field strengths will be TPSA:
 qd.K1
+
+# We can also define control elements to control LineElements
+# Let's create a controller which sets the B1 of qf and qd:
+c1 = Controller(
+  qf => (:B1, (ele; x) ->  x),
+  qd => (:B1, (ele; x) -> -x);
+  vars = (; x = 0.0,)
+)
+
+# Now we can vary both simultaneously:
+c1.x = 60.
+qf.B1
+qd.B1
+
+# Controllers also include the element itself. This can 
+# be useful if the current elements' values should be 
+# used in the function:
+c2 = Controller(
+  qf => (:B1, (ele; dB1) ->  ele.B1 + dB1),
+  qd => (:B1, (ele; dB1) ->  ele.B1 - dB1);
+  vars = (; dB1 = 0.0,)
+)
+
+c2.dB1 = 20
+
+qf.B1
+qd.B1
+
+# We can reset the values back to the most recently set state
+# of a controller using set!
+set!(c1)
+qf.B1
+qd.B1
+
+# Controllers can also be used to control other controllers:
+c3 = Controller(
+  c1 => (:x, (ele; dx) -> ele.x + dx);
+  vars = (; dx = 0.0,)
+)
+
+c3.dx = 10
+qf.B1
+qd.B1
 ```

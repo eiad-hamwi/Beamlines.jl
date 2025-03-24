@@ -1,9 +1,7 @@
-@kwdef mutable struct Beamline{T<:Number}
+@kwdef mutable struct Beamline
   line::Vector{LineElement}
   E_ref::Number
 end
-
-calc_Brho(E_ref) = @FastGTPSA E_ref/C_LIGHT*sqrt(1-(M_ELECTRON/E_ref)^2)
 
 function Base.getproperty(bl::Beamline, key::Symbol)
   if key == :Brho
@@ -83,7 +81,7 @@ end
 # Beamlines can be very long, so realistically only 
 # Base.Vector should be allowed.
 function Beamline(line::Vector{LineElement}; E_ref=Beamlines.default_E_ref)
-  bl = Beamline{typeof(E_ref)}(line, E_ref)
+  bl = Beamline(line, E_ref)
   !isnan(E_ref) || error("Please set the reference energy by either specify E_ref or Beamlines.default_E_ref")
   for i in eachindex(line)
     if haskey(line[i].pdict, BeamlineParams)

@@ -1,3 +1,7 @@
+calc_Brho(E_ref) = @FastGTPSA E_ref/C_LIGHT*sqrt(1-(M_ELECTRON/E_ref)^2)
+
+namedtuple(d::Dict) = NamedTuple{(keys(d)...,)}((values(d)...,))
+
 # Functions for float by Dan Abell.
 # Modified by Matt to handle eps for different float types.
 

@@ -17,7 +17,9 @@ export MattStandard,
        Octupole,
        Multipole,
        Marker,
-       Beamline
+       Beamline,
+       Controller,
+       set!
 
 using GTPSA, Accessors
 import GTPSA: sincu, sinhcu
@@ -42,6 +44,7 @@ default_E_ref::Float64 = NaN
 
 include("utils.jl")
 include("element.jl")
+include("control.jl")
 
 #=
 struct Bunch{T <: Number}
