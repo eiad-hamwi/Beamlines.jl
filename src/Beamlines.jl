@@ -55,16 +55,16 @@ function Bunch(n::Integer, ::Type{T}=Float64) where T <: Number
   return Bunch(rand(T, n), rand(T, n), rand(T, n), rand(T, n))
 end
 
-function make_lat(n::Integer=1; Kn1=0.36, L_quad=0.5, L_drift=1.)
-  function make_matt_ele(Kn1, L)
+function make_lat(n::Integer=1; K1=0.36, L_quad=0.5, L_drift=1.)
+  function make_matt_ele(K1, L)
     ele = LineElement()
-    ele.QuadParams = QuadParams(Kn1, 0.)
+    ele.QuadParams = QuadParams(K1, 0.)
     ele.LengthParams = LengthParams(L)
     return ele
   end
 
-  fodo = [make_matt_ele(Kn1, L_quad), make_matt_ele(0., L_drift),
-          make_matt_ele(-Kn1, L_quad), make_matt_ele(0., L_drift)]
+  fodo = [make_matt_ele(K1, L_quad), make_matt_ele(0., L_drift),
+          make_matt_ele(-K1, L_quad), make_matt_ele(0., L_drift)]
   lat = repeat(fodo, n)
   return lat
 end
@@ -83,26 +83,26 @@ end
 
 function track!(bunch::Bunch, ::MattStandard, params::Params, tmp=nothing)
   L = params.L
-  Kn1 = params.Kn1
+  K1 = params.K1
 
-  if abs(Kn1 - 0.0) < eps(Kn1) # Drift
+  if abs(K1 - 0.0) < eps(K1) # Drift
     @FastGTPSA! begin
       @. bunch.x += bunch.px * L
       @. bunch.y += bunch.py * L
     end
   else
-    if Kn1 >= 0
+    if K1 >= 0
       fq = bunch.x
       fp = bunch.px
       dq = bunch.y
       dp = bunch.py
-      sqrtk = sqrt(Kn1)
+      sqrtk = sqrt(K1)
     else
       fq = bunch.y
       fp = bunch.py
       dq = bunch.x
       dp = bunch.px
-      sqrtk = sqrt(-Kn1)
+      sqrtk = sqrt(-K1)
     end
 
     # One temporary array, for 1000 Floats is 3 allocations on Julia v1.11

@@ -1,12 +1,12 @@
 mutable struct BMultipole{T<:Number}
   order::Int
-  Bn::T       #  field strength in T
+  Bk::T       #  field strength in T/m^order
   tilt::T
-  function BMultipole(order, Bn, tilt)
-    return new{promote_type(typeof(Bn),typeof(tilt))}(order, Bn, tilt)
+  function BMultipole(order, Bk, tilt)
+    return new{promote_type(typeof(Bk),typeof(tilt))}(order, Bk, tilt)
   end
-  function BMultipole{T}(order, Bn, tilt) where {T}
-    return new{T}(order, Bn, tilt)
+  function BMultipole{T}(order, Bk, tilt) where {T}
+    return new{T}(order, Bk, tilt)
   end
 end
 
@@ -44,7 +44,7 @@ function replace(b::BMultipoleParams{S}, key::Symbol, value) where {S}
   ord, sym = BMULTIPOLE_KEY_MAP[key]
   bdict = BMultipoleDict{T}()
   for (order, bm) in b.bdict
-    bdict[order] = BMultipole{T}(order, bm.Bn, bm.tilt)
+    bdict[order] = BMultipole{T}(order, bm.Bk, bm.tilt)
   end
   if !haskey(bdict, ord)
     bdict[ord] = BMultipole{T}(ord, 0, 0)
@@ -94,28 +94,28 @@ Base.hasproperty(b::BMultipoleParams, key::Symbol) = haskey(b.bdict, first(BMULT
 # But because they only use stuff within this parameter struct,
 # we can optimize
 const BMULTIPOLE_KEY_MAP = Dict{Symbol, Tuple{Int,Symbol}}(
-  :Bn0 =>  ( 0, :Bn), 
-  :Bn1 =>  ( 1, :Bn),
-  :Bn2 =>  ( 2, :Bn),
-  :Bn3 =>  ( 3, :Bn),
-  :Bn4 =>  ( 4, :Bn),
-  :Bn5 =>  ( 5, :Bn),
-  :Bn6 =>  ( 6, :Bn),
-  :Bn7 =>  ( 7, :Bn),
-  :Bn8 =>  ( 8, :Bn),
-  :Bn9 =>  ( 9, :Bn),
-  :Bn10 => (10, :Bn),
-  :Bn11 => (11, :Bn),
-  :Bn12 => (12, :Bn),
-  :Bn13 => (13, :Bn),
-  :Bn14 => (14, :Bn),
-  :Bn15 => (15, :Bn),
-  :Bn16 => (16, :Bn),
-  :Bn17 => (17, :Bn),
-  :Bn18 => (18, :Bn),
-  :Bn19 => (19, :Bn),
-  :Bn20 => (20, :Bn),
-  :Bn21 => (21, :Bn), 
+  :B0 =>  ( 0, :Bk), 
+  :B1 =>  ( 1, :Bk),
+  :B2 =>  ( 2, :Bk),
+  :B3 =>  ( 3, :Bk),
+  :B4 =>  ( 4, :Bk),
+  :B5 =>  ( 5, :Bk),
+  :B6 =>  ( 6, :Bk),
+  :B7 =>  ( 7, :Bk),
+  :B8 =>  ( 8, :Bk),
+  :B9 =>  ( 9, :Bk),
+  :B10 => (10, :Bk),
+  :B11 => (11, :Bk),
+  :B12 => (12, :Bk),
+  :B13 => (13, :Bk),
+  :B14 => (14, :Bk),
+  :B15 => (15, :Bk),
+  :B16 => (16, :Bk),
+  :B17 => (17, :Bk),
+  :B18 => (18, :Bk),
+  :B19 => (19, :Bk),
+  :B20 => (20, :Bk),
+  :B21 => (21, :Bk), 
 
   :tilt0 =>  ( 0, :tilt), 
   :tilt1 =>  ( 1, :tilt),

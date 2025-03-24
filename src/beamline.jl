@@ -1,6 +1,29 @@
-@kwdef struct Beamline{T<:Number}
+@kwdef mutable struct Beamline{T<:Number}
   line::Vector{LineElement}
-  E_ref::T = Beamlines.default_E_ref
+  E_ref::Number
+end
+
+calc_Brho(E_ref) = @FastGTPSA E_ref/C_LIGHT*sqrt(1-(M_ELECTRON/E_ref)^2)
+
+function Base.getproperty(bl::Beamline, key::Symbol)
+  if key == :Brho
+    E_ref = bl.E_ref
+    return @noinline calc_Brho(E_ref)
+  else
+    return @noinline getfield(bl, key)
+  end
+end
+
+function Base.setproperty!(bl::Beamline, key::Symbol, value)
+  if key == :Brho
+    error("To be implemented soon")
+    #gamma = sqrt(1-(M_ELECTRON/binfo.E_ref)^2)
+    #setproperty!(binfo, :E_ref, )
+  elseif key == :line
+    error("Changing the line of a Beamline is not allowed")
+  else
+    setfield!(bl, key, value)
+  end
 end
 
 # Make Brho a property
@@ -10,21 +33,10 @@ end
 # Brho = E/c*sqrt(1 - (m/E)^2)
 # beta = sqrt(1 - (mass / E_tot)^2)
 
-Base.propertynames(::Beamline) = (:line, :E_ref, :Brho)
+Base.propertynames(::Beamline) = (:line, :binfo, :E_ref, :Brho)
 
-function Base.getproperty(bl::Beamline, key::Symbol)
-  if key == :Brho
-    gamma = sqrt(1-(M_ELECTRON/bl.E_ref)^2)
-    return bl.E_ref/C_LIGHT*gamma
-  elseif key == :E_ref # I have no idea why this makes things faster
-    return getfield(bl, :E_ref)
-  else
-    return getfield(bl, key)
-  end
-end
-
-struct BeamlineParams{T} <: AbstractParams
-  beamline::Beamline{T}
+struct BeamlineParams <: AbstractParams
+  beamline::Beamline
   beamline_index::Int
 end
 
@@ -33,8 +45,20 @@ end
 # Note that because BeamlineParams is immutable, not setting rn
 Base.propertynames(::BeamlineParams) = (:beamline, :beamline_index, :E_ref, :Brho, :s, :s_downstream)
 
-replace(::BeamlineParams, ::Symbol, ::Any) = error("BeamlineParams is not updateable")
-Base.setproperty!(::BeamlineParams, ::Symbol, ::Any) = error("BeamlineParams is not updateable")
+function Base.setproperty!(bp::BeamlineParams, key::Symbol, value)
+  setproperty!(bp.beamline, key, value)
+end
+
+# Because BeamlineParams contains an abstract type, "replacing" it 
+# is just modifying the field and returning itself
+function replace(bp::BeamlineParams, key::Symbol, value)
+  if key in (:E_ref,:Brho)
+    setproperty!(bp, key, value)
+    return bp
+  else
+    error("BeamlineParams cannot be replaced")
+  end
+end
 
 function Base.getproperty(bp::BeamlineParams, key::Symbol)
   if key in (:Brho, :E_ref)

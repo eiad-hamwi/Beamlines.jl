@@ -20,51 +20,43 @@ function get_norm_bm(ele::LineElement, key::Symbol)
   # Unpack + function barrier
   bp = ele.BMultipoleParams
   if haskey(ele.pdict, BeamlineParams) 
-    blp = ele.BeamlineParams
-    return @noinline _get_norm_bm1(bp, blp, key)
+    Brho = ele.Brho
   else
     !isnan(Beamlines.default_E_ref) || error("LineElement not in a Beamline: please set Beamlines.default_E_ref to calculate normalized field strengths")
-    return @noinline _get_norm_bm2(bp, Beamlines.default_E_ref, key)
+    Brho = calc_Brho(Beamlines.default_E_ref)
   end
+  return @noinline _get_norm_bm(bp, Brho, key)
 end
 
-function _get_norm_bm1(bp, blp, key)
+function _get_norm_bm(bp, Brho, key)
   ord, sym = BMULTIPOLE_KEY_MAP[BMULTIPOLE_VIRTUAL_MAP[key]]
-  Bn = getproperty(bp.bdict[ord], sym)
-  return Bn/blp.Brho
-end
-
-function _get_norm_bm2(bp, E_ref, key)
-  ord, sym = BMULTIPOLE_KEY_MAP[BMULTIPOLE_VIRTUAL_MAP[key]]
-  Bn = getproperty(bp.bdict[ord], sym)
-  gamma = sqrt(1-(M_ELECTRON/E_ref)^2)
-  Brho = E_ref/C_LIGHT*gamma
-  return Bn/Brho
+  Bk = getproperty(bp.bdict[ord], sym)
+  return Bk/Brho
 end
 
 const VIRTUAL_GETTER_MAP = Dict{Symbol,Function}(
-  :Kn0 =>  get_norm_bm,
-  :Kn1 =>  get_norm_bm,
-  :Kn2 =>  get_norm_bm,
-  :Kn3 =>  get_norm_bm,
-  :Kn4 =>  get_norm_bm,
-  :Kn5 =>  get_norm_bm,
-  :Kn6 =>  get_norm_bm,
-  :Kn7 =>  get_norm_bm,
-  :Kn8 =>  get_norm_bm,
-  :Kn9 =>  get_norm_bm,
-  :Kn10 => get_norm_bm,
-  :Kn11 => get_norm_bm,
-  :Kn12 => get_norm_bm,
-  :Kn13 => get_norm_bm,
-  :Kn14 => get_norm_bm,
-  :Kn15 => get_norm_bm,
-  :Kn16 => get_norm_bm,
-  :Kn17 => get_norm_bm,
-  :Kn18 => get_norm_bm,
-  :Kn19 => get_norm_bm,
-  :Kn20 => get_norm_bm,
-  :Kn21 => get_norm_bm,
+  :K0 =>  get_norm_bm,
+  :K1 =>  get_norm_bm,
+  :K2 =>  get_norm_bm,
+  :K3 =>  get_norm_bm,
+  :K4 =>  get_norm_bm,
+  :K5 =>  get_norm_bm,
+  :K6 =>  get_norm_bm,
+  :K7 =>  get_norm_bm,
+  :K8 =>  get_norm_bm,
+  :K9 =>  get_norm_bm,
+  :K10 => get_norm_bm,
+  :K11 => get_norm_bm,
+  :K12 => get_norm_bm,
+  :K13 => get_norm_bm,
+  :K14 => get_norm_bm,
+  :K15 => get_norm_bm,
+  :K16 => get_norm_bm,
+  :K17 => get_norm_bm,
+  :K18 => get_norm_bm,
+  :K19 => get_norm_bm,
+  :K20 => get_norm_bm,
+  :K21 => get_norm_bm,
 )
 
 function set_norm_bm!(ele::LineElement, key::Symbol, value)
@@ -73,52 +65,46 @@ function set_norm_bm!(ele::LineElement, key::Symbol, value)
 
   # If in a Beamline use that E_ref, else go global
   if haskey(ele.pdict, BeamlineParams) 
-    blp = ele.BeamlineParams
-    return @noinline _set_norm_bm1!(ele, blp, sym, value)
+    Brho = ele.Brho
   else
     !isnan(Beamlines.default_E_ref) || error("LineElement not in a Beamline: please set Beamlines.default_E_ref to calculate normalized field strengths")
-    return @noinline _set_norm_bm2!(ele, Beamlines.default_E_ref, sym, value)
+    Brho = calc_Brho(Beamlines.default_E_ref)
   end
+  return @noinline _set_norm_bm!(ele, Brho, sym, value)
 end
 
-function _set_norm_bm1!(ele, blp, key, value)
-  Bn = value*blp.Brho
-  return setproperty!(ele, key, Bn)
-end
-
-function _set_norm_bm2!(ele, E_ref, key, value)
-  gamma = sqrt(1-(M_ELECTRON/E_ref)^2)
-  Brho = E_ref/C_LIGHT*gamma
-  return setproperty!(ele, key, value * Brho)
+function _set_norm_bm!(ele, Brho, key, value)
+  Bk = value*Brho
+  return setproperty!(ele, key, Bk)
 end
 
 const VIRTUAL_SETTER_MAP = Dict{Symbol,Function}(
-  :Kn0 =>  set_norm_bm!,
-  :Kn1 =>  set_norm_bm!,
-  :Kn2 =>  set_norm_bm!,
-  :Kn3 =>  set_norm_bm!,
-  :Kn4 =>  set_norm_bm!,
-  :Kn5 =>  set_norm_bm!,
-  :Kn6 =>  set_norm_bm!,
-  :Kn7 =>  set_norm_bm!,
-  :Kn8 =>  set_norm_bm!,
-  :Kn9 =>  set_norm_bm!,
-  :Kn10 => set_norm_bm!,
-  :Kn11 => set_norm_bm!,
-  :Kn12 => set_norm_bm!,
-  :Kn13 => set_norm_bm!,
-  :Kn14 => set_norm_bm!,
-  :Kn15 => set_norm_bm!,
-  :Kn16 => set_norm_bm!,
-  :Kn17 => set_norm_bm!,
-  :Kn18 => set_norm_bm!,
-  :Kn19 => set_norm_bm!,
-  :Kn20 => set_norm_bm!,
-  :Kn21 => set_norm_bm!,
+  :K0 =>  set_norm_bm!,
+  :K1 =>  set_norm_bm!,
+  :K2 =>  set_norm_bm!,
+  :K3 =>  set_norm_bm!,
+  :K4 =>  set_norm_bm!,
+  :K5 =>  set_norm_bm!,
+  :K6 =>  set_norm_bm!,
+  :K7 =>  set_norm_bm!,
+  :K8 =>  set_norm_bm!,
+  :K9 =>  set_norm_bm!,
+  :K10 => set_norm_bm!,
+  :K11 => set_norm_bm!,
+  :K12 => set_norm_bm!,
+  :K13 => set_norm_bm!,
+  :K14 => set_norm_bm!,
+  :K15 => set_norm_bm!,
+  :K16 => set_norm_bm!,
+  :K17 => set_norm_bm!,
+  :K18 => set_norm_bm!,
+  :K19 => set_norm_bm!,
+  :K20 => set_norm_bm!,
+  :K21 => set_norm_bm!,
 )
 
 # Maybe we can do some trickery with FunctionWrappers
-# but that will require us to know the return type...
+# but that will require us to Kow the return type...
 
 # This solution is MUCH faster than AL
 # AND no bookkeeper :)
@@ -126,26 +112,26 @@ const VIRTUAL_SETTER_MAP = Dict{Symbol,Function}(
 # These are virtual parameters, which do NOT exist 
 # for lone BMultipole structs, only those within LineElements
 const BMULTIPOLE_VIRTUAL_MAP = Dict{Symbol,Symbol}(
-:Kn0 =>  :Bn0 ,
-:Kn1 =>  :Bn1 ,
-:Kn2 =>  :Bn2 ,
-:Kn3 =>  :Bn3 ,
-:Kn4 =>  :Bn4 ,
-:Kn5 =>  :Bn5 ,
-:Kn6 =>  :Bn6 ,
-:Kn7 =>  :Bn7 ,
-:Kn8 =>  :Bn8 ,
-:Kn9 =>  :Bn9 ,
-:Kn10 => :Bn10,
-:Kn11 => :Bn11,
-:Kn12 => :Bn12,
-:Kn13 => :Bn13,
-:Kn14 => :Bn14,
-:Kn15 => :Bn15,
-:Kn16 => :Bn16,
-:Kn17 => :Bn17,
-:Kn18 => :Bn18,
-:Kn19 => :Bn19,
-:Kn20 => :Bn20,
-:Kn21 => :Bn21,
+:K0 =>  :B0 ,
+:K1 =>  :B1 ,
+:K2 =>  :B2 ,
+:K3 =>  :B3 ,
+:K4 =>  :B4 ,
+:K5 =>  :B5 ,
+:K6 =>  :B6 ,
+:K7 =>  :B7 ,
+:K8 =>  :B8 ,
+:K9 =>  :B9 ,
+:K10 => :B10,
+:K11 => :B11,
+:K12 => :B12,
+:K13 => :B13,
+:K14 => :B14,
+:K15 => :B15,
+:K16 => :B16,
+:K17 => :B17,
+:K18 => :B18,
+:K19 => :B19,
+:K20 => :B20,
+:K21 => :B21,
 )

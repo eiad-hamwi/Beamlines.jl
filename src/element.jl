@@ -111,7 +111,7 @@ end
 function _setproperty!(pdict::ParamDict, p::AbstractParams, key::Symbol, value)
   if hasproperty(p, key) # Check if we can put this value in current struct
     T = typeof(getproperty(p, key))
-    if promote_type(typeof(value), T) == T 
+    if promote_type(typeof(value), T) == T
       return setproperty!(p, key, value)
     end
   end
@@ -124,28 +124,28 @@ end
 #Base.propertynames(::LineElement) = tuple(:pdict, keys(PROPERTIES_MAP)..., keys(PARAMS_MAP)...)
 
 const PROPERTIES_MAP = Dict{Symbol,Type{<:AbstractParams}}(
-  :Bn0 =>  BMultipoleParams,
-  :Bn1 =>  BMultipoleParams,
-  :Bn2 =>  BMultipoleParams,
-  :Bn3 =>  BMultipoleParams,
-  :Bn4 =>  BMultipoleParams,
-  :Bn5 =>  BMultipoleParams,
-  :Bn6 =>  BMultipoleParams,
-  :Bn7 =>  BMultipoleParams,
-  :Bn8 =>  BMultipoleParams,
-  :Bn9 =>  BMultipoleParams,
-  :Bn10 => BMultipoleParams,
-  :Bn11 => BMultipoleParams,
-  :Bn12 => BMultipoleParams,
-  :Bn13 => BMultipoleParams,
-  :Bn14 => BMultipoleParams,
-  :Bn15 => BMultipoleParams,
-  :Bn16 => BMultipoleParams,
-  :Bn17 => BMultipoleParams,
-  :Bn18 => BMultipoleParams,
-  :Bn19 => BMultipoleParams,
-  :Bn20 => BMultipoleParams,
-  :Bn21 => BMultipoleParams,
+  :B0 =>  BMultipoleParams,
+  :B1 =>  BMultipoleParams,
+  :B2 =>  BMultipoleParams,
+  :B3 =>  BMultipoleParams,
+  :B4 =>  BMultipoleParams,
+  :B5 =>  BMultipoleParams,
+  :B6 =>  BMultipoleParams,
+  :B7 =>  BMultipoleParams,
+  :B8 =>  BMultipoleParams,
+  :B9 =>  BMultipoleParams,
+  :B10 => BMultipoleParams,
+  :B11 => BMultipoleParams,
+  :B12 => BMultipoleParams,
+  :B13 => BMultipoleParams,
+  :B14 => BMultipoleParams,
+  :B15 => BMultipoleParams,
+  :B16 => BMultipoleParams,
+  :B17 => BMultipoleParams,
+  :B18 => BMultipoleParams,
+  :B19 => BMultipoleParams,
+  :B20 => BMultipoleParams,
+  :B21 => BMultipoleParams,
 
   :tilt0 =>  BMultipoleParams,
   :tilt1 =>  BMultipoleParams,
