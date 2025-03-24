@@ -18,6 +18,12 @@ d2 = Drift(L=1.0)
 # Up to 21st order multipoles allowed:
 m21 = Multipole(K21=5.0, L=6)
 
+# All of these are really just one type, LineElement
+# E.g. literally,
+# Quadrupole(; kwargs) = LineElement("Quadrupole"; kwargs...)
+# Feel free to define your own element "classes":
+bench = LineElement("Bench", L=25.0)
+
 # We can access quantities like:
 qf.L
 qf.B1 # B field in Tesla
@@ -36,6 +42,12 @@ bl = Beamline([qf, sf, d1, qd, sd, d2])
 # Easily get s, and s_downstream, as deferred expression:
 qd.s
 qd.s_downstream
+
+# We can get all Quadrupoles for example in the line with:
+quads = findall(t->t.class == "Quadrupole", bl.line)
+
+# Or just the focusing quadrupoles with:
+f_quads = findall(t->t.class == "Quadrupole" && t.K1 > 0., bl.line)
 
 # And of course, EVERYTHING is fully polymorphic for differentiability.
 # Let's make the length of the first drift a TPSA variable:
