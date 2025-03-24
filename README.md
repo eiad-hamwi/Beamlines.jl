@@ -10,19 +10,27 @@ Beamlines.default_E_ref = 18e9 # 18 GeV
 
 qf = Quadrupole(K1=0.36, L=0.5)
 sf = Sextupole(K2=0.1, L=0.5)
-d1 = Drift(L=1.0)
+d1 = Drift(L=0.6)
+b1 = SBend(L=6.0, angle=pi/132)
+d2 = Drift(L=1.0)
 qd = Quadrupole(K1=-qf.K1, L=0.5)
 sd = Sextupole(K2=-sf.K2, L=0.5)
-d2 = Drift(L=1.0)
+d3 = Drift(L=0.6)
+b2 = SBend(L=6.0, angle=pi/132)
+d4 = Drift(L=1.0)
 
 # Up to 21st order multipoles allowed:
 m21 = Multipole(K21=5.0, L=6)
+
+# Misalignments are also supported:
+bad_quad = Quadrupole(K1=0.36, L=0.5, x_offset=0.2e-3, tilt=0.5e-3, y_rot=-0.5e-3)
 
 # All of these are really just one type, LineElement
 # E.g. literally,
 # Quadrupole(; kwargs) = LineElement("Quadrupole"; kwargs...)
 # Feel free to define your own element "classes":
-bench = LineElement("Bench", L=25.0)
+Monitor(; kwargs...) = LineElement("Monitor"; kwargs...)
+monitor = Monitor(L=0.2)
 
 # We can access quantities like:
 qf.L
@@ -37,7 +45,7 @@ qf.tracking_method = MyTrackingMethod()
 # EVERYTHING is a deferred expression, there is no bookkeeper
 
 # Create a FODO beamline
-bl = Beamline([qf, sf, d1, qd, sd, d2])
+bl = Beamline([qf, sf, d1, b1, d2, qd, sd, d3, b2, d4])
 
 # Easily get s, and s_downstream, as deferred expression:
 qd.s
@@ -107,7 +115,9 @@ c3 = Controller(
   vars = (; dx = 0.0,)
 )
 
-c3.dx = 10
+# And of course still fully polymorphic:
+dx = @vars(D)[1]
+c3.dx = dx
 qf.B1
 qd.B1
 ```

@@ -45,8 +45,7 @@ Drift(; kwargs...)      = LineElement("Drift"; kwargs...)
 Octupole(; kwargs...)   = LineElement("Octupole"; kwargs...)
 Multipole(; kwargs...)  = LineElement("Multipole"; kwargs...)
 Marker(; kwargs...)     = LineElement("Marker"; kwargs...)
-
-include("multipole.jl")
+SBend(; kwargs...)      = LineElement("SBend"; kwargs...)
 
 # These should be in tracking package instead
 struct MattStandard end
@@ -59,15 +58,12 @@ end
   tracking_method::T = MattStandard()
   L::U               = 0.0
   class::String      = "Marker"
+  name::String       = ""
 end
-
-include("beamline.jl")
 
 # Use Accessors here for default bc super convenient for replacing entire (even mutable) type
 # For more complex params (e.g. BMultipoleParams) we will need custom override
 replace(p::AbstractParams, key::Symbol, value) = set(p, opcompose(PropertyLens(key)), value)
-
-include("virtual.jl")
 
 function Base.getproperty(ele::LineElement, key::Symbol)
   if key == :pdict 
@@ -118,72 +114,17 @@ function _setproperty!(pdict::ParamDict, p::AbstractParams, key::Symbol, value)
   return pdict[PROPERTIES_MAP[key]] = replace(p, key, value)
 end
 
+function deepcopy_no_beamline(ele::LineElement)
+  newele = LineElement(ele.class)
+  for (key, p) in ele.pdict
+    if key != BeamlineParams
+      setindex!(newele.pdict, deepcopy(p), key)
+    end
+  end
+  return newele
+end
+
 #Base.fieldnames(::Type{LineElement}) = tuple(:pdict, keys(PROPERTIES_MAP)..., keys(PARAMS_MAP)...)
 #Base.fieldnames(::LineElement) = tuple(:pdict, keys(PROPERTIES_MAP)..., keys(PARAMS_MAP)...)
 #Base.propertynames(::Type{LineElement}) = tuple(:pdict, keys(PROPERTIES_MAP)..., keys(PARAMS_MAP)...)
 #Base.propertynames(::LineElement) = tuple(:pdict, keys(PROPERTIES_MAP)..., keys(PARAMS_MAP)...)
-
-const PROPERTIES_MAP = Dict{Symbol,Type{<:AbstractParams}}(
-  :B0 =>  BMultipoleParams,
-  :B1 =>  BMultipoleParams,
-  :B2 =>  BMultipoleParams,
-  :B3 =>  BMultipoleParams,
-  :B4 =>  BMultipoleParams,
-  :B5 =>  BMultipoleParams,
-  :B6 =>  BMultipoleParams,
-  :B7 =>  BMultipoleParams,
-  :B8 =>  BMultipoleParams,
-  :B9 =>  BMultipoleParams,
-  :B10 => BMultipoleParams,
-  :B11 => BMultipoleParams,
-  :B12 => BMultipoleParams,
-  :B13 => BMultipoleParams,
-  :B14 => BMultipoleParams,
-  :B15 => BMultipoleParams,
-  :B16 => BMultipoleParams,
-  :B17 => BMultipoleParams,
-  :B18 => BMultipoleParams,
-  :B19 => BMultipoleParams,
-  :B20 => BMultipoleParams,
-  :B21 => BMultipoleParams,
-
-  :tilt0 =>  BMultipoleParams,
-  :tilt1 =>  BMultipoleParams,
-  :tilt2 =>  BMultipoleParams,
-  :tilt3 =>  BMultipoleParams,
-  :tilt4 =>  BMultipoleParams,
-  :tilt5 =>  BMultipoleParams,
-  :tilt6 =>  BMultipoleParams,
-  :tilt7 =>  BMultipoleParams,
-  :tilt8 =>  BMultipoleParams,
-  :tilt9 =>  BMultipoleParams,
-  :tilt10 => BMultipoleParams,
-  :tilt11 => BMultipoleParams,
-  :tilt12 => BMultipoleParams,
-  :tilt13 => BMultipoleParams,
-  :tilt14 => BMultipoleParams,
-  :tilt15 => BMultipoleParams,
-  :tilt16 => BMultipoleParams,
-  :tilt17 => BMultipoleParams,
-  :tilt18 => BMultipoleParams,
-  :tilt19 => BMultipoleParams,
-  :tilt20 => BMultipoleParams,
-  :tilt21 => BMultipoleParams,
-
-  :L => UniversalParams,
-  :tracking_method => UniversalParams,
-  :class => UniversalParams,
-
-  :beamline => BeamlineParams,
-  :beamline_index => BeamlineParams,
-  :E_ref => BeamlineParams,
-  :Brho => BeamlineParams, 
-  :s => BeamlineParams,
-  :s_downstream => BeamlineParams,
-)
-
-const PARAMS_MAP = Dict{Symbol,Type{<:AbstractParams}}(
-  :BMultipoleParams => BMultipoleParams,
-  :UniversalParams => UniversalParams,
-  :BeamlineParams => BeamlineParams,
-)

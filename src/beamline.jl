@@ -90,6 +90,7 @@ function Beamline(line::Vector{LineElement}; E_ref=Beamlines.default_E_ref)
       else
         # This can be changed later...
         error("Duplicate elements not currently allowed in a beamline")
+        #line[i] = deepcopy_no_beamline(line[line[i].beamline_index])
       end
     end
     line[i].BeamlineParams = BeamlineParams(bl, i)

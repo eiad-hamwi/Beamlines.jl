@@ -140,3 +140,30 @@ const BMULTIPOLE_KEY_MAP = Dict{Symbol, Tuple{Int,Symbol}}(
   :tilt20 => (20, :tilt),
   :tilt21 => (21, :tilt), 
 )
+
+# These are virtual parameters, which do NOT exist 
+# for lone BMultipole structs, only those within LineElements
+const BMULTIPOLE_VIRTUAL_MAP = Dict{Symbol,Symbol}(
+:K0 =>  :B0 ,
+:K1 =>  :B1 ,
+:K2 =>  :B2 ,
+:K3 =>  :B3 ,
+:K4 =>  :B4 ,
+:K5 =>  :B5 ,
+:K6 =>  :B6 ,
+:K7 =>  :B7 ,
+:K8 =>  :B8 ,
+:K9 =>  :B9 ,
+:K10 => :B10,
+:K11 => :B11,
+:K12 => :B12,
+:K13 => :B13,
+:K14 => :B14,
+:K15 => :B15,
+:K16 => :B16,
+:K17 => :B17,
+:K18 => :B18,
+:K19 => :B19,
+:K20 => :B20,
+:K21 => :B21,
+)

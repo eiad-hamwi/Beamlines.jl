@@ -17,6 +17,7 @@ export MattStandard,
        Octupole,
        Multipole,
        Marker,
+       SBend,
        Beamline,
        Controller,
        set!
@@ -44,7 +45,13 @@ default_E_ref::Float64 = NaN
 
 include("utils.jl")
 include("element.jl")
+include("beamline.jl")
+include("virtual.jl")
+include("multipole.jl")
+include("bend.jl")
 include("control.jl")
+include("alignment.jl")
+include("keymaps.jl")
 
 #=
 struct Bunch{T <: Number}
