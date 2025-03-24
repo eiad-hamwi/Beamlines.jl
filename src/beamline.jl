@@ -56,7 +56,7 @@ function replace(bp::BeamlineParams, key::Symbol, value)
     setproperty!(bp, key, value)
     return bp
   else
-    error("BeamlineParams cannot be replaced")
+    error("BeamlineParams property $key cannot be modified")
   end
 end
 

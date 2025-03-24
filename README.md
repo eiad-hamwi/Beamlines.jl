@@ -39,7 +39,7 @@ qd.s_downstream
 
 # And of course, EVERYTHING is fully polymorphic for differentiability.
 # Let's make the length of the first drift a TPSA variable:
-const D = Descriptor(1,1)
+const D = Descriptor(2,1)
 ΔL = @vars(D)[1]
 
 d1.L += ΔL
@@ -48,12 +48,11 @@ d1.L += ΔL
 qd.s
 qd.s_downstream
 
-# Finally, we can even make E_ref a TPSA variable:
-ΔE_ref = @vars(D)[1]
-qf_new = Quadrupole(K1=0.36, L=0.5)
-bl_new = Beamline([qf_new], E_ref=Beamlines.default_E_ref+ΔE_ref)
+# Even the reference energy of the Beamline can be set as 
+# a TPSA variable:
+ΔE = @vars(D)[2]
+bl.E_ref += ΔE
 
-qf_new.K1 # Returns TPSA
-qf_new.K1 = 0.1
-qf_new.B1 # Now a TPSA variable too!
+# Now e.g. normalized field strengths will be TPSA:
+qd.K1
 ```
