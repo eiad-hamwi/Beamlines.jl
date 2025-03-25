@@ -5,7 +5,6 @@
 ```julia
 using Beamlines, GTPSA
 
-# This only needs to be specified if we input normalized field strengths
 qf = Quadrupole(K1=0.36, L=0.5)
 sf = Sextupole(K2=0.1, L=0.5)
 d1 = Drift(L=0.6)
