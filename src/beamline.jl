@@ -1,6 +1,27 @@
 @kwdef mutable struct Beamline
   line::Vector{LineElement}
   E_ref::Number
+
+  # Beamlines can be very long, so realistically only 
+  # Base.Vector should be allowed.
+  function Beamline(line::Vector{LineElement}, E_ref)
+    bl = new(line, E_ref)
+    for i in eachindex(line)
+      if haskey(line[i].pdict, BeamlineParams)
+        if line[i].beamline != bl
+          error("Element is already in a beamline")
+        else
+          # This can be changed later...
+          error("Duplicate elements not currently allowed in a beamline")
+          #line[i] = deepcopy_no_beamline(line[line[i].beamline_index])
+        end
+      end
+      
+      line[i].BeamlineParams = BeamlineParams(bl, i)
+    end
+    
+    return bl
+  end
 end
 
 function Base.getproperty(bl::Beamline, key::Symbol)
@@ -78,26 +99,6 @@ function Base.getproperty(bp::BeamlineParams, key::Symbol)
   end
 end
 
-# Beamlines can be very long, so realistically only 
-# Base.Vector should be allowed.
-function Beamline(line::Vector{LineElement}; E_ref=Beamlines.default_E_ref)
-  bl = Beamline(line, E_ref)
-  !isnan(E_ref) || error("Please set the reference energy by either specify E_ref or Beamlines.default_E_ref")
-  for i in eachindex(line)
-    if haskey(line[i].pdict, BeamlineParams)
-      if line[i].beamline != bl
-        error("Element is already in a beamline")
-      else
-        # This can be changed later...
-        error("Duplicate elements not currently allowed in a beamline")
-        #line[i] = deepcopy_no_beamline(line[line[i].beamline_index])
-      end
-    end
-    line[i].BeamlineParams = BeamlineParams(bl, i)
-  end
-  
-  return bl
-end
 
 # We could overload getproperty to disallow accessing line
 # directly so elements cannot be removed, but I will deal 

@@ -26,7 +26,7 @@ using GTPSA, Accessors
 import GTPSA: sincu, sinhcu
 
 # Reference energy in eV
-default_E_ref::Float64 = NaN
+#default_E_ref::Float64 = NaN
 
 
 # Note that LineElement and parameter structs have three things:
@@ -42,12 +42,6 @@ default_E_ref::Float64 = NaN
 # Often, quantities can be get/set as properties, and NOT virtual properties.
 # For example, the s position of an element can be PROPERTY of the BeamlineParams 
 # struct as one can sum the lengths of each preceding element in the Beamline.
-get_norm_bm() = 0.0
-get_bm() = 0.0
-set_norm_bm!() = 0.0
-set_bm!() = 0.0
-get_bend_angle() = 0.0
-set_bend_angle!() = 0.0
 
 include("utils.jl")
 include("element.jl")

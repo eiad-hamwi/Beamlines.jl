@@ -48,6 +48,8 @@ end
 
 get_ord_sym(::BMultipoleParams{nrml}, key) where {nrml} = nrml == false ? BMULTIPOLE_KEY_MAP[key] : KMULTIPOLE_KEY_MAP[key]
 
+isnormalized(::BMultipoleParams{nrml}) where {nrml} = nrml
+
 # Replace will copy the copy + change the type, and if the key is not provided
 # then it will add the multipole.
 function replace(b::BMultipoleParams{nrml,S}, key::Symbol, value) where {nrml,S}
@@ -61,6 +63,17 @@ function replace(b::BMultipoleParams{nrml,S}, key::Symbol, value) where {nrml,S}
     bdict[ord] = BMultipole{nrml,T}(ord, 0, 0)
   end
   setproperty!(bdict[ord], sym, T(value))
+  return BMultipoleParams{nrml,T}(bdict)
+end
+
+function change(b::BMultipoleParams{old_nrml,S}, Brho) where {old_nrml,S}
+  nrml = !old_nrml
+  scl = old_nrml ? Brho : 1/Brho
+  T = promote_type(S, typeof(scl))
+  bdict = BMultipoleDict{nrml,T}()
+  for (order, bm) in b.bdict
+    bdict[order] = BMultipole{nrml,T}(order, scl*bm.strength, bm.tilt)
+  end
   return BMultipoleParams{nrml,T}(bdict)
 end
 
