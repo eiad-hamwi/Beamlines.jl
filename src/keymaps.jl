@@ -104,7 +104,7 @@ const VIRTUAL_GETTER_MAP = Dict{Symbol,Function}(
   :B20 => get_bm,
   :B21 => get_bm,
 
-  :angle => get_bend_angle,
+  #:angle => get_bend_angle,
 )
 
 const VIRTUAL_SETTER_MAP = Dict{Symbol,Function}(
@@ -156,7 +156,7 @@ const VIRTUAL_SETTER_MAP = Dict{Symbol,Function}(
   :B20 => set_bm!,
   :B21 => set_bm!,
 
-  :angle => set_bend_angle!,
+  #:angle => set_bend_angle!,
 )
 
 # Maybe we can do some trickery with FunctionWrappers
