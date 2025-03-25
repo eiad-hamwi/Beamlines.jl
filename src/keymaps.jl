@@ -1,28 +1,6 @@
 
 const PROPERTIES_MAP = Dict{Symbol,Type{<:AbstractParams}}(
-  :B0 =>  BMultipoleParams,
-  :B1 =>  BMultipoleParams,
-  :B2 =>  BMultipoleParams,
-  :B3 =>  BMultipoleParams,
-  :B4 =>  BMultipoleParams,
-  :B5 =>  BMultipoleParams,
-  :B6 =>  BMultipoleParams,
-  :B7 =>  BMultipoleParams,
-  :B8 =>  BMultipoleParams,
-  :B9 =>  BMultipoleParams,
-  :B10 => BMultipoleParams,
-  :B11 => BMultipoleParams,
-  :B12 => BMultipoleParams,
-  :B13 => BMultipoleParams,
-  :B14 => BMultipoleParams,
-  :B15 => BMultipoleParams,
-  :B16 => BMultipoleParams,
-  :B17 => BMultipoleParams,
-  :B18 => BMultipoleParams,
-  :B19 => BMultipoleParams,
-  :B20 => BMultipoleParams,
-  :B21 => BMultipoleParams,
-
+  :tilts =>  BMultipoleParams,
   :tilt0 =>  BMultipoleParams,
   :tilt1 =>  BMultipoleParams,
   :tilt2 =>  BMultipoleParams,
@@ -78,59 +56,6 @@ const PARAMS_MAP = Dict{Symbol,Type{<:AbstractParams}}(
 )
 
 
-const VIRTUAL_GETTER_MAP = Dict{Symbol,Function}(
-  :K0 =>  get_norm_bm,
-  :K1 =>  get_norm_bm,
-  :K2 =>  get_norm_bm,
-  :K3 =>  get_norm_bm,
-  :K4 =>  get_norm_bm,
-  :K5 =>  get_norm_bm,
-  :K6 =>  get_norm_bm,
-  :K7 =>  get_norm_bm,
-  :K8 =>  get_norm_bm,
-  :K9 =>  get_norm_bm,
-  :K10 => get_norm_bm,
-  :K11 => get_norm_bm,
-  :K12 => get_norm_bm,
-  :K13 => get_norm_bm,
-  :K14 => get_norm_bm,
-  :K15 => get_norm_bm,
-  :K16 => get_norm_bm,
-  :K17 => get_norm_bm,
-  :K18 => get_norm_bm,
-  :K19 => get_norm_bm,
-  :K20 => get_norm_bm,
-  :K21 => get_norm_bm,
-
-  :angle => get_bend_angle,
-)
-
-const VIRTUAL_SETTER_MAP = Dict{Symbol,Function}(
-  :K0 =>  set_norm_bm!,
-  :K1 =>  set_norm_bm!,
-  :K2 =>  set_norm_bm!,
-  :K3 =>  set_norm_bm!,
-  :K4 =>  set_norm_bm!,
-  :K5 =>  set_norm_bm!,
-  :K6 =>  set_norm_bm!,
-  :K7 =>  set_norm_bm!,
-  :K8 =>  set_norm_bm!,
-  :K9 =>  set_norm_bm!,
-  :K10 => set_norm_bm!,
-  :K11 => set_norm_bm!,
-  :K12 => set_norm_bm!,
-  :K13 => set_norm_bm!,
-  :K14 => set_norm_bm!,
-  :K15 => set_norm_bm!,
-  :K16 => set_norm_bm!,
-  :K17 => set_norm_bm!,
-  :K18 => set_norm_bm!,
-  :K19 => set_norm_bm!,
-  :K20 => set_norm_bm!,
-  :K21 => set_norm_bm!,
-
-  :angle => set_bend_angle!,
-)
 
 # Maybe we can do some trickery with FunctionWrappers
 # but that will require us to Kow the return type...

@@ -66,21 +66,23 @@ end
 replace(p::AbstractParams, key::Symbol, value) = set(p, opcompose(PropertyLens(key)), value)
 
 function Base.getproperty(ele::LineElement, key::Symbol)
-  if key == :pdict 
+  if haskey(VIRTUAL_GETTER_MAP, key) # Virtual properties override everything!
+    return VIRTUAL_GETTER_MAP[key](ele, key)
+  elseif key == :pdict 
     return getfield(ele, :pdict)
   elseif haskey(PARAMS_MAP, key) # To get parameters struct
     return getindex(ele.pdict, PARAMS_MAP[key])
   elseif haskey(PROPERTIES_MAP, key)  # To get a property in a parameter struct
     return getproperty(getindex(ele.pdict, PROPERTIES_MAP[key]), key)
-  elseif haskey(VIRTUAL_GETTER_MAP, key) # To get a virtual element property
-    return VIRTUAL_GETTER_MAP[key](ele, key)
   else
     error("Type LineElement has no property $key")
   end
 end
 
 function Base.setproperty!(ele::LineElement, key::Symbol, value)
-  if haskey(PARAMS_MAP, key) # Setting whole parameter struct
+  if haskey(VIRTUAL_SETTER_MAP, key) # Virtual properties override everything!
+    return VIRTUAL_SETTER_MAP[key](ele, key, value)
+  elseif haskey(PARAMS_MAP, key) # Setting whole parameter struct
     setindex!(ele.pdict, value, PARAMS_MAP[key])
   elseif haskey(PROPERTIES_MAP, key)
     if !haskey(ele.pdict, PROPERTIES_MAP[key])
@@ -93,8 +95,6 @@ function Base.setproperty!(ele::LineElement, key::Symbol, value)
     p = getindex(ele.pdict, PROPERTIES_MAP[key])
     # Function barrier for speed
     @noinline _setproperty!(ele.pdict, p, key, value)
-  elseif haskey(VIRTUAL_SETTER_MAP, key)
-    return VIRTUAL_SETTER_MAP[key](ele, key, value)
   else
     if haskey(VIRTUAL_GETTER_MAP, key)
       error("LineElement property $key is read-only")

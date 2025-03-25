@@ -26,7 +26,7 @@ using GTPSA, Accessors
 import GTPSA: sincu, sinhcu
 
 # Reference energy in eV
-default_E_ref::Float64 = NaN
+#default_E_ref::Float64 = NaN
 
 
 # Note that LineElement and parameter structs have three things:
@@ -46,12 +46,13 @@ default_E_ref::Float64 = NaN
 include("utils.jl")
 include("element.jl")
 include("beamline.jl")
-include("virtual.jl")
 include("multipole.jl")
+include("virtual.jl")
 include("bend.jl")
 include("control.jl")
 include("alignment.jl")
 include("keymaps.jl")
+
 
 #=
 struct Bunch{T <: Number}

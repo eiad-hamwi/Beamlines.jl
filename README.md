@@ -6,8 +6,6 @@
 using Beamlines, GTPSA
 
 # This only needs to be specified if we input normalized field strengths
-Beamlines.default_E_ref = 18e9 # 18 GeV
-
 qf = Quadrupole(K1=0.36, L=0.5)
 sf = Sextupole(K2=0.1, L=0.5)
 d1 = Drift(L=0.6)
@@ -18,6 +16,8 @@ sd = Sextupole(K2=-sf.K2, L=0.5)
 d3 = Drift(L=0.6)
 b2 = SBend(L=6.0, angle=pi/132)
 d4 = Drift(L=1.0)
+
+sol = Solenoid(Ks=0.12, L=5.3)
 
 # Up to 21st order multipoles allowed:
 m21 = Multipole(K21=5.0, L=6)
@@ -34,22 +34,45 @@ monitor = Monitor(L=0.2)
 
 # We can access quantities like:
 qf.L
-qf.B1 # B field in Tesla
+qf.K1 # Normalized field strength
+
+# Create a FODO beamline
+E_ref = 18e9 # 18 GeV
+bl = Beamline([qf, sf, d1, b1, d2, qd, sd, d3, b2, d4], E_ref)
+
+# Now we can get the unnormalized field strengths:
+qf.B1
 
 # We can also reset quantities:
-qf.B1 = 60
+qf.B1 = 60.
 qf.K1 = 0.36
 
+# Set the tracking method of an element:
 struct MyTrackingMethod end
 qf.tracking_method = MyTrackingMethod()
 # EVERYTHING is a deferred expression, there is no bookkeeper
 
-# Create a FODO beamline
-bl = Beamline([qf, sf, d1, b1, d2, qd, sd, d3, b2, d4])
-
 # Easily get s, and s_downstream, as deferred expression:
 qd.s
 qd.s_downstream
+
+# Because we entered normalized field strengths, those values are treated as 
+# independent variables - they do not change with reference energy.
+# Change the reference energy, and see the UNnormalized field strengths change:
+qf.B1
+bl.E_ref += 10e9
+qf.B1
+
+# We can make instead make the normalized field strengths depend on E_ref,
+# by setting B_dep_E_ref:
+qf.B_dep_E_ref = false
+bl.E_ref -= 10e9
+qf.B1 # unchanged from above!
+qf.K1 # changed!
+
+# Let's reset to original:
+qf.K1 = 0.36
+qf.B_dep_E_ref = true
 
 # We can get all Quadrupoles for example in the line with:
 quads = findall(t->t.class == "Quadrupole", bl.line)
@@ -73,41 +96,41 @@ qd.s_downstream
 ΔE = @vars(D)[2]
 bl.E_ref += ΔE
 
-# Now e.g. normalized field strengths will be TPSA:
-qd.K1
+# Now e.g. unnormalized field strengths will be TPSA:
+qd.B1
 
 # We can also define control elements to control LineElements
 # Let's create a controller which sets the B1 of qf and qd:
 c1 = Controller(
-  qf => (:B1, (ele; x) ->  x),
-  qd => (:B1, (ele; x) -> -x);
+  qf => (:K1, (ele; x) ->  x),
+  qd => (:K1, (ele; x) -> -x);
   vars = (; x = 0.0,)
 )
 
 # Now we can vary both simultaneously:
 c1.x = 60.
-qf.B1
-qd.B1
+qf.K1
+qd.K1
 
 # Controllers also include the element itself. This can 
 # be useful if the current elements' values should be 
 # used in the function:
 c2 = Controller(
-  qf => (:B1, (ele; dB1) ->  ele.B1 + dB1),
-  qd => (:B1, (ele; dB1) ->  ele.B1 - dB1);
-  vars = (; dB1 = 0.0,)
+  qf => (:K1, (ele; dK1) ->  ele.K1 + dK1),
+  qd => (:K1, (ele; dK1) ->  ele.K1 - dK1);
+  vars = (; dK1 = 0.0,)
 )
 
-c2.dB1 = 20
+c2.dK1 = 20
 
-qf.B1
-qd.B1
+qf.K1
+qd.K1
 
 # We can reset the values back to the most recently set state
 # of a controller using set!
 set!(c1)
-qf.B1
-qd.B1
+qf.K1
+qd.K1
 
 # Controllers can also be used to control other controllers:
 c3 = Controller(
@@ -118,6 +141,6 @@ c3 = Controller(
 # And of course still fully polymorphic:
 dx = @vars(D)[1]
 c3.dx = dx
-qf.B1
-qd.B1
+qf.K1
+qd.K1
 ```
