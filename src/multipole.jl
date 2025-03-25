@@ -1,18 +1,24 @@
-mutable struct BMultipole{T<:Number}
-  order::Int
-  Bk::T       #  field strength in T/m^order
-  tilt::T
-  function BMultipole(order, Bk, tilt)
-    return new{promote_type(typeof(Bk),typeof(tilt))}(order, Bk, tilt)
+mutable struct BMultipole{nrml,T<:Number}
+  order::Int    # Cyclic group order=0 solenoid, order=1 dipole, order=2 Quadrupole, ... 
+  strength::T   # field strength in T/m^order, normalized by Brho if nrml == true
+  tilt::T       # direction (in xy plane) of directional-derivative defining strength
+  function BMultipole(order, strength, tilt)
+    # Default nrml = false
+    return new{false,promote_type(typeof(strength),typeof(tilt))}(order, strength, tilt)
   end
-  function BMultipole{T}(order, Bk, tilt) where {T}
-    return new{T}(order, Bk, tilt)
+  function BMultipole{nrml}(order, strength, tilt) where {nrml}
+    nrml isa Bool || error("BMultipole type parameter nrml must be a Bool")
+    return new{nrml,promote_type(typeof(strength),typeof(tilt))}(order, strength, tilt)
+  end
+  function BMultipole{nrml,T}(order, strength, tilt) where {nrml.T}
+    nrml isa Bool || error("BMultipole type parameter nrml must be a Bool")
+    return new{nrml,T}(order, strength, tilt)
   end
 end
 
 # Key == order
 # Note we require all multipoles to have same number type
-const BMultipoleDict{T} = Dict{Int, BMultipole{T}} where {T<:Number}
+const BMultipoleDict{nrml,T} = Dict{Int, BMultipole{nrml,T}} where {nrml,T<:Number}
 
 # Note the repetitive code - this means we can likely coalesce ParamDict and BMultipoleDict 
 # Into some single new restricted Dict type.
@@ -33,31 +39,31 @@ function Base.setindex!(h::BMultipoleDict, v::BMultipole, key::Int)
   # ==================================================================
 end
 
-@kwdef struct BMultipoleParams{T<:Number} <: AbstractParams
-  bdict::BMultipoleDict{T} = BMultipoleDict{Float64}() # multipole coefficients
+@kwdef struct BMultipoleParams{nrml,T<:Number} <: AbstractParams
+  bdict::BMultipoleDict{nrml,T} = BMultipoleDict{false,Float64}() # multipole coefficients
 end
 
 # Replace will copy the copy + change the type, and if the key is not provided
 # then it will add the multipole.
-function replace(b::BMultipoleParams{S}, key::Symbol, value) where {S}
+function replace(b::BMultipoleParams{nrml,S}, key::Symbol, value) where {nrml,S}
   T = promote_type(S, typeof(value))
-  ord, sym = BMULTIPOLE_KEY_MAP[key]
-  bdict = BMultipoleDict{T}()
+  ord, sym = nrml == false ? BMULTIPOLE_KEY_MAP[key] : KMULTIPOLE_KEY_MAP[key]
+  bdict = BMultipoleDict{nrml,T}()
   for (order, bm) in b.bdict
-    bdict[order] = BMultipole{T}(order, bm.Bk, bm.tilt)
+    bdict[order] = BMultipole{nrml,T}(order, bm.strength, bm.tilt)
   end
   if !haskey(bdict, ord)
-    bdict[ord] = BMultipole{T}(ord, 0, 0)
+    bdict[ord] = BMultipole{nrml,T}(ord, 0, 0)
   end
   setproperty!(bdict[ord], sym, T(value))
-  return BMultipoleParams{T}(bdict)
+  return BMultipoleParams{nrml,T}(bdict)
 end
 
-function Base.getproperty(bm::BMultipoleParams, key::Symbol)
+function Base.getproperty(bm::BMultipoleParams{nrml}, key::Symbol) where {nrml}
   if key == :bdict
     return getfield(bm, :bdict)
   else
-    order, sym = BMULTIPOLE_KEY_MAP[key]
+    order, sym = nrml == false ? BMULTIPOLE_KEY_MAP[key] : KMULTIPOLE_KEY[key]
     return getproperty(getindex(bm.bdict, order), sym)
   end
 end
@@ -67,8 +73,8 @@ function Base.getindex(bm::BMultipoleParams, key)
   return bm.bdict[key]
 end
 
-function Base.setproperty!(bm::BMultipoleParams, key::Symbol, value)
-  order, sym = BMULTIPOLE_KEY_MAP[key]
+function Base.setproperty!(bm::BMultipoleParams{nrml}, key::Symbol, value) where {nrml}
+  order, sym = nrml == false ? BMULTIPOLE_KEY_MAP[key] : KMULTIPOLE_KEY_MAP[key]
   b = getindex(bm.bdict, order)
   return setproperty!(b, sym, value)
 end
@@ -78,7 +84,9 @@ end
 # a tilt to the current multipole tilt.
 
 
-Base.hasproperty(b::BMultipoleParams, key::Symbol) = haskey(b.bdict, first(BMULTIPOLE_KEY_MAP[key]))
+function Base.hasproperty(b::BMultipoleParams{nrml}, key::Symbol) where {nrml}
+  return haskey(b.bdict, first(nrml == false ? BMULTIPOLE_KEY_MAP[key] : KMULTIPOLE_KEY_MAP[key]))
+end
 
 #Base.fieldnames(::Type{<:BMultipoleParams}) = tuple(:bdict, keys(BMULTIPOLE_KEY_MAP)...)
 #Base.fieldnames(::BMultipoleParams) = tuple(:bdict, keys(BMULTIPOLE_KEY_MAP)...)
@@ -93,52 +101,106 @@ Base.hasproperty(b::BMultipoleParams, key::Symbol) = haskey(b.bdict, first(BMULT
 # Technically these are virtual IO fields
 # But because they only use stuff within this parameter struct,
 # we can optimize
+# Note accelerator physics convention: cyclic group order
+# is -1 of "multipole" order, and 0th order is "s" for solenoid
 const BMULTIPOLE_KEY_MAP = Dict{Symbol, Tuple{Int,Symbol}}(
-  :B0 =>  ( 0, :Bk), 
-  :B1 =>  ( 1, :Bk),
-  :B2 =>  ( 2, :Bk),
-  :B3 =>  ( 3, :Bk),
-  :B4 =>  ( 4, :Bk),
-  :B5 =>  ( 5, :Bk),
-  :B6 =>  ( 6, :Bk),
-  :B7 =>  ( 7, :Bk),
-  :B8 =>  ( 8, :Bk),
-  :B9 =>  ( 9, :Bk),
-  :B10 => (10, :Bk),
-  :B11 => (11, :Bk),
-  :B12 => (12, :Bk),
-  :B13 => (13, :Bk),
-  :B14 => (14, :Bk),
-  :B15 => (15, :Bk),
-  :B16 => (16, :Bk),
-  :B17 => (17, :Bk),
-  :B18 => (18, :Bk),
-  :B19 => (19, :Bk),
-  :B20 => (20, :Bk),
-  :B21 => (21, :Bk), 
+  :Bs =>  ( 0, :strength), 
+  :B0 =>  ( 1, :strength),
+  :B1 =>  ( 2, :strength),
+  :B2 =>  ( 3, :strength),
+  :B3 =>  ( 4, :strength),
+  :B4 =>  ( 5, :strength),
+  :B5 =>  ( 6, :strength),
+  :B6 =>  ( 7, :strength),
+  :B7 =>  ( 8, :strength),
+  :B8 =>  ( 9, :strength),
+  :B9 =>  (10, :strength),
+  :B10 => (11, :strength),
+  :B11 => (12, :strength),
+  :B12 => (13, :strength),
+  :B13 => (14, :strength),
+  :B14 => (15, :strength),
+  :B15 => (16, :strength),
+  :B16 => (17, :strength),
+  :B17 => (18, :strength),
+  :B18 => (19, :strength),
+  :B19 => (20, :strength),
+  :B20 => (21, :strength), 
+  :B21 => (22, :strength), 
 
-  :tilt0 =>  ( 0, :tilt), 
-  :tilt1 =>  ( 1, :tilt),
-  :tilt2 =>  ( 2, :tilt),
-  :tilt3 =>  ( 3, :tilt),
-  :tilt4 =>  ( 4, :tilt),
-  :tilt5 =>  ( 5, :tilt),
-  :tilt6 =>  ( 6, :tilt),
-  :tilt7 =>  ( 7, :tilt),
-  :tilt8 =>  ( 8, :tilt),
-  :tilt9 =>  ( 9, :tilt),
-  :tilt10 => (10, :tilt),
-  :tilt11 => (11, :tilt),
-  :tilt12 => (12, :tilt),
-  :tilt13 => (13, :tilt),
-  :tilt14 => (14, :tilt),
-  :tilt15 => (15, :tilt),
-  :tilt16 => (16, :tilt),
-  :tilt17 => (17, :tilt),
-  :tilt18 => (18, :tilt),
-  :tilt19 => (19, :tilt),
-  :tilt20 => (20, :tilt),
-  :tilt21 => (21, :tilt), 
+  :tilts =>  ( 0, :tilt), 
+  :tilt0 =>  ( 1, :tilt),
+  :tilt1 =>  ( 2, :tilt),
+  :tilt2 =>  ( 3, :tilt),
+  :tilt3 =>  ( 4, :tilt),
+  :tilt4 =>  ( 5, :tilt),
+  :tilt5 =>  ( 6, :tilt),
+  :tilt6 =>  ( 7, :tilt),
+  :tilt7 =>  ( 8, :tilt),
+  :tilt8 =>  ( 9, :tilt),
+  :tilt9 =>  (10, :tilt),
+  :tilt10 => (11, :tilt),
+  :tilt11 => (12, :tilt),
+  :tilt12 => (13, :tilt),
+  :tilt13 => (14, :tilt),
+  :tilt14 => (15, :tilt),
+  :tilt15 => (16, :tilt),
+  :tilt16 => (17, :tilt),
+  :tilt17 => (18, :tilt),
+  :tilt18 => (19, :tilt),
+  :tilt19 => (20, :tilt),
+  :tilt20 => (21, :tilt), 
+  :tilt21 => (22, :tilt), 
+)
+
+const KMULTIPOLE_KEY_MAP = Dict{Symbol, Tuple{Int,Symbol}}(
+  :Ks =>  ( 0, :strength), 
+  :K0 =>  ( 1, :strength),
+  :K1 =>  ( 2, :strength),
+  :K2 =>  ( 3, :strength),
+  :K3 =>  ( 4, :strength),
+  :K4 =>  ( 5, :strength),
+  :K5 =>  ( 6, :strength),
+  :K6 =>  ( 7, :strength),
+  :K7 =>  ( 8, :strength),
+  :K8 =>  ( 9, :strength),
+  :K9 =>  (10, :strength),
+  :K10 => (11, :strength),
+  :K11 => (12, :strength),
+  :K12 => (13, :strength),
+  :K13 => (14, :strength),
+  :K14 => (15, :strength),
+  :K15 => (16, :strength),
+  :K16 => (17, :strength),
+  :K17 => (18, :strength),
+  :K18 => (19, :strength),
+  :K19 => (20, :strength),
+  :K20 => (21, :strength), 
+  :K21 => (22, :strength), 
+
+  :tilts =>  ( 0, :tilt), 
+  :tilt0 =>  ( 1, :tilt),
+  :tilt1 =>  ( 2, :tilt),
+  :tilt2 =>  ( 3, :tilt),
+  :tilt3 =>  ( 4, :tilt),
+  :tilt4 =>  ( 5, :tilt),
+  :tilt5 =>  ( 6, :tilt),
+  :tilt6 =>  ( 7, :tilt),
+  :tilt7 =>  ( 8, :tilt),
+  :tilt8 =>  ( 9, :tilt),
+  :tilt9 =>  (10, :tilt),
+  :tilt10 => (11, :tilt),
+  :tilt11 => (12, :tilt),
+  :tilt12 => (13, :tilt),
+  :tilt13 => (14, :tilt),
+  :tilt14 => (15, :tilt),
+  :tilt15 => (16, :tilt),
+  :tilt16 => (17, :tilt),
+  :tilt17 => (18, :tilt),
+  :tilt18 => (19, :tilt),
+  :tilt19 => (20, :tilt),
+  :tilt20 => (21, :tilt), 
+  :tilt21 => (22, :tilt), 
 )
 
 # These are virtual parameters, which do NOT exist 
