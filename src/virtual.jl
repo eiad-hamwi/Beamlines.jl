@@ -156,7 +156,7 @@ end
   # Get corresponding magnetic field symbol to set
   sym = BMULTIPOLE_VIRTUAL_MAP[key]
 
-  # If in a Beamline use that E_ref, else go global
+  # If in a Beamline use that E_ref, else go globals
   if haskey(ele.pdict, BeamlineParams) 
     Brho = ele.Brho
   else
@@ -166,13 +166,13 @@ end
   return @noinline _set_norm_bm!(ele, Brho, sym, value)
 end
 =#
-
+#=
 function _set_norm_bm!(b, key, value)
   Bk = value*Brho
   setproperty!(ele, key, Bk)
   return value
 end
-
+=#
 
 #=
 function _get_norm_bm(bp, Brho, key)
