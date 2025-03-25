@@ -42,16 +42,23 @@ default_E_ref::Float64 = NaN
 # Often, quantities can be get/set as properties, and NOT virtual properties.
 # For example, the s position of an element can be PROPERTY of the BeamlineParams 
 # struct as one can sum the lengths of each preceding element in the Beamline.
+get_norm_bm() = 0.0
+get_bm() = 0.0
+set_norm_bm!() = 0.0
+set_bm!() = 0.0
+get_bend_angle() = 0.0
+set_bend_angle!() = 0.0
 
 include("utils.jl")
 include("element.jl")
 include("beamline.jl")
-include("virtual.jl")
+#include("virtual.jl")
 include("multipole.jl")
 include("bend.jl")
 include("control.jl")
 include("alignment.jl")
 include("keymaps.jl")
+
 
 #=
 struct Bunch{T <: Number}

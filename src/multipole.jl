@@ -10,7 +10,7 @@ mutable struct BMultipole{nrml,T<:Number}
     nrml isa Bool || error("BMultipole type parameter nrml must be a Bool")
     return new{nrml,promote_type(typeof(strength),typeof(tilt))}(order, strength, tilt)
   end
-  function BMultipole{nrml,T}(order, strength, tilt) where {nrml.T}
+  function BMultipole{nrml,T}(order, strength, tilt) where {nrml,T}
     nrml isa Bool || error("BMultipole type parameter nrml must be a Bool")
     return new{nrml,T}(order, strength, tilt)
   end
@@ -43,11 +43,13 @@ end
   bdict::BMultipoleDict{nrml,T} = BMultipoleDict{false,Float64}() # multipole coefficients
 end
 
+get_ord_sym(::BMultipoleParams{nrml}, key) where {nrml} = nrml == false ? BMULTIPOLE_KEY_MAP[key] : KMULTIPOLE_KEY_MAP[key]
+
 # Replace will copy the copy + change the type, and if the key is not provided
 # then it will add the multipole.
 function replace(b::BMultipoleParams{nrml,S}, key::Symbol, value) where {nrml,S}
   T = promote_type(S, typeof(value))
-  ord, sym = nrml == false ? BMULTIPOLE_KEY_MAP[key] : KMULTIPOLE_KEY_MAP[key]
+  ord, sym = get_ord_sym(b, key)
   bdict = BMultipoleDict{nrml,T}()
   for (order, bm) in b.bdict
     bdict[order] = BMultipole{nrml,T}(order, bm.strength, bm.tilt)
@@ -59,24 +61,24 @@ function replace(b::BMultipoleParams{nrml,S}, key::Symbol, value) where {nrml,S}
   return BMultipoleParams{nrml,T}(bdict)
 end
 
-function Base.getproperty(bm::BMultipoleParams{nrml}, key::Symbol) where {nrml}
+function Base.getproperty(b::BMultipoleParams{nrml}, key::Symbol) where {nrml}
   if key == :bdict
-    return getfield(bm, :bdict)
+    return getfield(b, :bdict)
   else
-    order, sym = nrml == false ? BMULTIPOLE_KEY_MAP[key] : KMULTIPOLE_KEY[key]
-    return getproperty(getindex(bm.bdict, order), sym)
+    order, sym = get_ord_sym(b, key)
+    return getproperty(getindex(b.bdict, order), sym)
   end
 end
 
 # Also allow array-like indexing of the param struct
-function Base.getindex(bm::BMultipoleParams, key)
-  return bm.bdict[key]
+function Base.getindex(b::BMultipoleParams, key)
+  return b.bdict[key]
 end
 
-function Base.setproperty!(bm::BMultipoleParams{nrml}, key::Symbol, value) where {nrml}
-  order, sym = nrml == false ? BMULTIPOLE_KEY_MAP[key] : KMULTIPOLE_KEY_MAP[key]
-  b = getindex(bm.bdict, order)
-  return setproperty!(b, sym, value)
+function Base.setproperty!(b::BMultipoleParams{nrml}, key::Symbol, value) where {nrml}
+  order, sym = get_ord_sym(b, key)
+  bm = getindex(b.bdict, order)
+  return setproperty!(bm, sym, value)
 end
 
 # One question might be how to handle the input of :tilt with :Ks
@@ -85,7 +87,7 @@ end
 
 
 function Base.hasproperty(b::BMultipoleParams{nrml}, key::Symbol) where {nrml}
-  return haskey(b.bdict, first(nrml == false ? BMULTIPOLE_KEY_MAP[key] : KMULTIPOLE_KEY_MAP[key]))
+  return haskey(b.bdict, first(get_ord_sym(b, key)))
 end
 
 #Base.fieldnames(::Type{<:BMultipoleParams}) = tuple(:bdict, keys(BMULTIPOLE_KEY_MAP)...)

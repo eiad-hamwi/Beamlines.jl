@@ -18,7 +18,10 @@ less of a concern.
 
 function get_norm_bm(ele::LineElement, key::Symbol)
   # Unpack + function barrier
-  bp = ele.BMultipoleParams
+  # First unpack to check if nrml = true or nrml = false
+  b = ele.BMultipoleParams # In this unpacking step we now
+  return @noinline _get_norm_bm1(b, key)
+  #=
   if haskey(ele.pdict, BeamlineParams) 
     Brho = ele.Brho
   else
@@ -26,14 +29,25 @@ function get_norm_bm(ele::LineElement, key::Symbol)
     Brho = calc_Brho(Beamlines.default_E_ref)
   end
   return @noinline _get_norm_bm(bp, Brho, key)
+  =#
 end
 
+function _get_norm_bm(b::BMultipoleParams{nrml}, key) where {nrml}
+  ord, sym = BMULTIPOLE_KEY_MAP[BMULTIPOLE_VIRTUAL_MAP[key]]
+  strength = getproperty(b.bdict[ord], sym)
+  if nrml == true # If we already are storing normalized values
+    
+  else
+
+  end
+end
+#=
 function _get_norm_bm(bp, Brho, key)
   ord, sym = BMULTIPOLE_KEY_MAP[BMULTIPOLE_VIRTUAL_MAP[key]]
   Bk = getproperty(bp.bdict[ord], sym)
   return Bk/Brho
 end
-
+=#
 function get_bend_angle(ele::LineElement, ::Symbol)
   bp = ele.BendParams
   up = ele.UniversalParams
