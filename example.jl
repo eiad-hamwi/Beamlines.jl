@@ -28,8 +28,8 @@ m_thick = Multipole(K1L=0.16, L=2.0)
 m_thick.K1L == 0.16    # true
 m_thick.K1 == 0.16/2.0 # true
 
-# Whichever you enter first for a specific multipole sets that 
-# value to be the independent variable
+# Whichever you enter first for a specific multipole - integrated/nonintegrated
+# and normalized/unnormalized - sets that value to be the independent variable
 
 # Misalignments are also supported:
 bad_quad = Quadrupole(K1=0.36, L=0.5, x_offset=0.2e-3, tilt=0.5e-3, y_rot=-0.5e-3)
@@ -61,24 +61,6 @@ qf.tracking_method = MyTrackingMethod()
 qd.s
 qd.s_downstream
 
-# Because we entered normalized field strengths, those values are treated as 
-# independent variables - they do not change with reference energy.
-# Change the reference energy, and see the UNnormalized field strengths change:
-qf.B1
-bl.E_ref += 10e9
-qf.B1
-
-# We can make instead make the normalized field strengths depend on E_ref,
-# by setting B_dep_E_ref:
-qf.B_dep_E_ref = false
-bl.E_ref -= 10e9
-qf.B1 # unchanged from above!
-qf.K1 # changed!
-
-# Let's reset to original:
-qf.K1 = 0.36
-qf.B_dep_E_ref = true
-
 # We can get all Quadrupoles for example in the line with:
 quads = findall(t->t.class == "Quadrupole", bl.line)
 
@@ -107,8 +89,8 @@ qd.B1
 # We can also define control elements to control LineElements
 # Let's create a controller which sets the B1 of qf and qd:
 c1 = Controller(
-  qf => (:K1, (ele; x) ->  x),
-  qd => (:K1, (ele; x) -> -x);
+  (qf, :K1) => (ele; x) ->  x,
+  (qd, :K1) => (ele; x) -> -x;
   vars = (; x = 0.0,)
 )
 
@@ -121,8 +103,8 @@ qd.K1
 # be useful if the current elements' values should be 
 # used in the function:
 c2 = Controller(
-  qf => (:K1, (ele; dK1) ->  ele.K1 + dK1),
-  qd => (:K1, (ele; dK1) ->  ele.K1 - dK1);
+  (qf, :K1) => (ele; dK1) ->  ele.K1 + dK1,
+  (qd, :K1) => (ele; dK1) ->  ele.K1 - dK1;
   vars = (; dK1 = 0.0,)
 )
 
@@ -139,7 +121,7 @@ qd.K1
 
 # Controllers can also be used to control other controllers:
 c3 = Controller(
-  c1 => (:x, (ele; dx) -> ele.x + dx);
+  (c1, :x) => (ele; dx) -> ele.x + dx;
   vars = (; dx = 0.0,)
 )
 

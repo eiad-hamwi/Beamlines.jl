@@ -17,10 +17,24 @@ d3 = Drift(L=0.6)
 b2 = SBend(L=6.0, angle=pi/132)
 d4 = Drift(L=1.0)
 
+# We can access quantities like:
+qf.L
+qf.K1 # Normalized field strength
+
 sol = Solenoid(Ks=0.12, L=5.3)
 
 # Up to 21st order multipoles allowed:
 m21 = Multipole(K21=5.0, L=6)
+
+# Integrated multipoles can also be specified:
+m_thin = Multipole(K1L=0.16)
+m_thick = Multipole(K1L=0.16, L=2.0)
+
+m_thick.K1L == 0.16    # true
+m_thick.K1 == 0.16/2.0 # true
+
+# Whichever you enter first for a specific multipole - integrated/nonintegrated
+# and normalized/unnormalized - sets that value to be the independent variable
 
 # Misalignments are also supported:
 bad_quad = Quadrupole(K1=0.36, L=0.5, x_offset=0.2e-3, tilt=0.5e-3, y_rot=-0.5e-3)
@@ -31,10 +45,6 @@ bad_quad = Quadrupole(K1=0.36, L=0.5, x_offset=0.2e-3, tilt=0.5e-3, y_rot=-0.5e-
 # Feel free to define your own element "classes":
 Monitor(; kwargs...) = LineElement("Monitor"; kwargs...)
 monitor = Monitor(L=0.2)
-
-# We can access quantities like:
-qf.L
-qf.K1 # Normalized field strength
 
 # Create a FODO beamline
 E_ref = 18e9 # 18 GeV
@@ -55,24 +65,6 @@ qf.tracking_method = MyTrackingMethod()
 # Easily get s, and s_downstream, as deferred expression:
 qd.s
 qd.s_downstream
-
-# Because we entered normalized field strengths, those values are treated as 
-# independent variables - they do not change with reference energy.
-# Change the reference energy, and see the UNnormalized field strengths change:
-qf.B1
-bl.E_ref += 10e9
-qf.B1
-
-# We can make instead make the normalized field strengths depend on E_ref,
-# by setting B_dep_E_ref:
-qf.B_dep_E_ref = false
-bl.E_ref -= 10e9
-qf.B1 # unchanged from above!
-qf.K1 # changed!
-
-# Let's reset to original:
-qf.K1 = 0.36
-qf.B_dep_E_ref = true
 
 # We can get all Quadrupoles for example in the line with:
 quads = findall(t->t.class == "Quadrupole", bl.line)
@@ -102,8 +94,8 @@ qd.B1
 # We can also define control elements to control LineElements
 # Let's create a controller which sets the B1 of qf and qd:
 c1 = Controller(
-  qf => (:K1, (ele; x) ->  x),
-  qd => (:K1, (ele; x) -> -x);
+  (qf, :K1) => (ele; x) ->  x,
+  (qd, :K1) => (ele; x) -> -x;
   vars = (; x = 0.0,)
 )
 
@@ -116,8 +108,8 @@ qd.K1
 # be useful if the current elements' values should be 
 # used in the function:
 c2 = Controller(
-  qf => (:K1, (ele; dK1) ->  ele.K1 + dK1),
-  qd => (:K1, (ele; dK1) ->  ele.K1 - dK1);
+  (qf, :K1) => (ele; dK1) ->  ele.K1 + dK1,
+  (qd, :K1) => (ele; dK1) ->  ele.K1 - dK1;
   vars = (; dK1 = 0.0,)
 )
 
@@ -134,7 +126,7 @@ qd.K1
 
 # Controllers can also be used to control other controllers:
 c3 = Controller(
-  c1 => (:x, (ele; dx) -> ele.x + dx);
+  (c1, :x) => (ele; dx) -> ele.x + dx;
   vars = (; dx = 0.0,)
 )
 

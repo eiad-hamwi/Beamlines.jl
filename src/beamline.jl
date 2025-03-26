@@ -37,7 +37,7 @@ function Base.setproperty!(bl::Beamline, key::Symbol, value)
   if key == :Brho 
     error("To be implemented soon")
   else
-    return setfield!(bl, key, symbol)
+    return setfield!(bl, key, value)
   end
 end
 
