@@ -12,10 +12,24 @@ d3 = Drift(L=0.6)
 b2 = SBend(L=6.0, angle=pi/132)
 d4 = Drift(L=1.0)
 
+# We can access quantities like:
+qf.L
+qf.K1 # Normalized field strength
+
 sol = Solenoid(Ks=0.12, L=5.3)
 
 # Up to 21st order multipoles allowed:
 m21 = Multipole(K21=5.0, L=6)
+
+# Integrated multipoles can also be specified:
+m_thin = Multipole(K1L=0.16)
+m_thick = Multipole(K1L=0.16, L=2.0)
+
+m_thick.K1L == 0.16    # true
+m_thick.K1 == 0.16/2.0 # true
+
+# Whichever you enter first for a specific multipole sets that 
+# value to be the independent variable
 
 # Misalignments are also supported:
 bad_quad = Quadrupole(K1=0.36, L=0.5, x_offset=0.2e-3, tilt=0.5e-3, y_rot=-0.5e-3)
@@ -26,10 +40,6 @@ bad_quad = Quadrupole(K1=0.36, L=0.5, x_offset=0.2e-3, tilt=0.5e-3, y_rot=-0.5e-
 # Feel free to define your own element "classes":
 Monitor(; kwargs...) = LineElement("Monitor"; kwargs...)
 monitor = Monitor(L=0.2)
-
-# We can access quantities like:
-qf.L
-qf.K1 # Normalized field strength
 
 # Create a FODO beamline
 E_ref = 18e9 # 18 GeV

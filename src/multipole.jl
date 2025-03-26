@@ -43,7 +43,9 @@ function Base.getproperty(bm::BMultipole, key::Symbol)
 end
 
 function Base.setproperty!(bm::BMultipole{T}, key::Symbol, value) where {T}
-  if key in fieldnames(BMultipole)
+  if key in (:strength,:tilt) 
+    return setfield!(bm, key, T(value))
+  elseif key in fieldnames(BMultipole)
     return setfield!(bm, key, value)
   elseif haskey(BMULTIPOLE_STRENGTH_MAP, key)
     order, normalized, integrated = BMULTIPOLE_STRENGTH_MAP[key]
@@ -207,6 +209,14 @@ end
 
 @kwdef struct BMultipoleParams{T<:Number} <: AbstractParams
   bdict::BMultipoleDict{T} = BMultipoleDict{Float64}() # multipole coefficients
+  BMultipoleParams(bdict::BMultipoleDict{T}) where {T} = new{T}(bdict)
+  function BMultipoleParams{T}(b::BMultipoleParams) where {T} 
+    bdict = BMultipoleDict{T}()
+    for (order, bm) in b.bdict
+      bdict[order] = BMultipole{T}(bm.strength, bm.tilt, order, bm.normalized, bm.integrated)
+    end
+    return new{T}(bdict)
+  end
 end
 
 function Base.hasproperty(b::BMultipoleParams, key::Symbol)
@@ -264,14 +274,6 @@ function Base.setproperty!(b::BMultipoleParams{T}, key::Symbol, value) where {T}
     b.bdict[order] = BMultipole{T}(0, 0, order, normalized, integrated)
   end
   return setproperty!(b.bdict[order], key, value)
-end
-
-function BMultipoleParams{T}(b::BMultipoleParams) where {T} 
-  bdict = BMultipoleDict{T}()
-  for (order, bm) in b.bdict
-    bdict[order] = BMultipole{T}(bm.strength, bm.tilt, order, bm.normalized, bm.integrated)
-  end
-  return BMultipoleParams{T}(bdict)
 end
 
 #=

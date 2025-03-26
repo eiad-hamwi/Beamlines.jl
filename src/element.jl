@@ -75,7 +75,11 @@ function Base.getproperty(ele::LineElement, key::Symbol)
   elseif haskey(PROPERTIES_MAP, key)  # To get a property in a parameter struct
     return getproperty(getindex(ele.pdict, PROPERTIES_MAP[key]), key)
   else
-    error("Type LineElement has no property $key")
+    if haskey(VIRTUAL_SETTER_MAP, key)
+      error("LineElement property $key is write-only")
+    else
+      error("Type LineElement has no property $key")
+    end
   end
 end
 
