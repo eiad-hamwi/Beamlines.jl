@@ -1,5 +1,5 @@
 @kwdef mutable struct Beamline
-  line::Vector{LineElement}
+  const line::Vector{LineElement}
   E_ref::Number
 
   # Beamlines can be very long, so realistically only 
@@ -29,19 +29,15 @@ function Base.getproperty(bl::Beamline, key::Symbol)
     E_ref = bl.E_ref
     return @noinline calc_Brho(E_ref)
   else
-    return @noinline getfield(bl, key)
+    return getfield(bl, key)
   end
 end
 
 function Base.setproperty!(bl::Beamline, key::Symbol, value)
-  if key == :Brho
+  if key == :Brho 
     error("To be implemented soon")
-    #gamma = sqrt(1-(M_ELECTRON/binfo.E_ref)^2)
-    #setproperty!(binfo, :E_ref, )
-  elseif key == :line
-    error("Changing the line of a Beamline is not allowed")
   else
-    setfield!(bl, key, value)
+    return setfield!(bl, key, symbol)
   end
 end
 

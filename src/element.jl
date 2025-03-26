@@ -66,12 +66,12 @@ end
 replace(p::AbstractParams, key::Symbol, value) = set(p, opcompose(PropertyLens(key)), value)
 
 function Base.getproperty(ele::LineElement, key::Symbol)
-  if haskey(VIRTUAL_GETTER_MAP, key) # Virtual properties override everything!
-    return VIRTUAL_GETTER_MAP[key](ele, key)
-  elseif key == :pdict 
+  if key == :pdict 
     return getfield(ele, :pdict)
   elseif haskey(PARAMS_MAP, key) # To get parameters struct
     return getindex(ele.pdict, PARAMS_MAP[key])
+  elseif haskey(VIRTUAL_GETTER_MAP, key) # Virtual properties override regular properties
+      return VIRTUAL_GETTER_MAP[key](ele, key)
   elseif haskey(PROPERTIES_MAP, key)  # To get a property in a parameter struct
     return getproperty(getindex(ele.pdict, PROPERTIES_MAP[key]), key)
   else
@@ -80,10 +80,10 @@ function Base.getproperty(ele::LineElement, key::Symbol)
 end
 
 function Base.setproperty!(ele::LineElement, key::Symbol, value)
-  if haskey(VIRTUAL_SETTER_MAP, key) # Virtual properties override everything!
-    return VIRTUAL_SETTER_MAP[key](ele, key, value)
-  elseif haskey(PARAMS_MAP, key) # Setting whole parameter struct
+  if haskey(PARAMS_MAP, key) # Setting whole parameter struct
     setindex!(ele.pdict, value, PARAMS_MAP[key])
+  elseif haskey(VIRTUAL_SETTER_MAP, key) # Virtual properties override regular properties
+    return VIRTUAL_SETTER_MAP[key](ele, key, value)
   elseif haskey(PROPERTIES_MAP, key)
     if !haskey(ele.pdict, PROPERTIES_MAP[key])
       # If the parameter struct associated with this symbol does not exist, create it
