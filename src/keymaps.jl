@@ -33,6 +33,7 @@ const PROPERTIES_MAP = Dict{Symbol,Type{<:AbstractParams}}(
   :beamline_index => BeamlineParams,
   :E_ref => BeamlineParams,
   :Brho => BeamlineParams, 
+  :species => BeamlineParams,
   :s => BeamlineParams,
   :s_downstream => BeamlineParams,
 
@@ -53,6 +54,7 @@ const PARAMS_MAP = Dict{Symbol,Type{<:AbstractParams}}(
   :UniversalParams => UniversalParams,
   :BeamlineParams => BeamlineParams,
   :BendParams => BendParams,
+  :AlignmentParams => AlignmentParams,
 )
 
 
