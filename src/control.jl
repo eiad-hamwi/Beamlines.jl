@@ -1,7 +1,7 @@
 # Need a way to map symbols 
 
 mutable struct Controller
-  fcns::Dict{Union{Controller,LineElement},Tuple{Symbol,Function}}
+  fcns::Dict{Tuple{Union{Controller,LineElement},Symbol},Function}
   vars::NamedTuple
   function Controller(pairs...; vars=(; x=0.0,))
     fcns = Dict(pairs...)
@@ -39,7 +39,6 @@ function set!(c::Controller; kwargs...)
 end
 
 function _set!(c, vars, kwargs)
-  fcns = c.fcns
   newvars = merge(vars, values(kwargs))
   _run_controller(c, newvars)
   return newvars
@@ -47,9 +46,9 @@ end
 
 function _run_controller(c, vars)
   fcns = c.fcns
-  for (ele,prop_and_f) in fcns
-    prop = first(prop_and_f)
-    f = last(prop_and_f)
+  for (ele_and_prop,f) in fcns
+    ele = first(ele_and_prop)
+    prop = last(ele_and_prop)
     val = f(ele; vars...)
     setproperty!(ele, prop, val)
   end
