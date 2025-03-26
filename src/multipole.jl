@@ -276,6 +276,31 @@ function Base.setproperty!(b::BMultipoleParams{T}, key::Symbol, value) where {T}
   return setproperty!(b.bdict[order], key, value)
 end
 
+function replace(b1::BMultipoleParams{S}, key::Symbol, value) where {S} 
+  T = promote_type(S,typeof(value))
+  b = BMultipoleParams{T}(b1)
+
+  if haskey(BMULTIPOLE_STRENGTH_MAP, key)
+    ord, normalized, integrated = BMULTIPOLE_STRENGTH_MAP[key]
+  elseif haskey(BMULTIPOLE_TILT_MAP, key)
+    # tilt is first value of this multipole being set
+    # This is kind of weird, but we can allow it.
+    # default normalized to true, and integrated to false
+    ord = BMULTIPOLE_TILT_MAP[key]
+    normalized = true
+    integrated = false
+  else
+    error("Unreachable! Replace should only be called when the strength or tilt of a BMultipole is being set such that the number type must be promoted. Please submit an issue to Beamlines.jl")
+  end
+
+  if !haskey(b.bdict, ord)
+    # First set of this value determines if normalized and/or integrated
+    b.bdict[ord] = BMultipole{T}(0, 0, ord, normalized, integrated)
+  end
+  setproperty!(b.bdict[ord], key, value)
+  return b
+end
+
 #=
 
   # Now let's check if the multipole associated with the key exists already:
