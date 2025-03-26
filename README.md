@@ -42,8 +42,8 @@ bad_quad = Quadrupole(K1=0.36, L=0.5, x_offset=0.2e-3, tilt=0.5e-3, y_rot=-0.5e-
 # E.g. literally,
 # Quadrupole(; kwargs) = LineElement("Quadrupole"; kwargs...)
 # Feel free to define your own element "classes":
-Monitor(; kwargs...) = LineElement("Monitor"; kwargs...)
-monitor = Monitor(L=0.2)
+SkewQuadrupole(; kwargs...) = LineElement("SkewQuadrupole"; tilt1=pi/4, kwargs...)
+sqf = SkewQuadrupole(K1=0.36, L=0.2)
 
 # Create a FODO beamline
 bl = Beamline([qf, sf, d1, b1, d2, qd, sd, d3, b2, d4], E_ref=18e9) # 18 GeV
