@@ -47,18 +47,11 @@ Multipole(; kwargs...)  = LineElement("Multipole"; kwargs...)
 Marker(; kwargs...)     = LineElement("Marker"; kwargs...)
 SBend(; kwargs...)      = LineElement("SBend"; kwargs...)
 
-# These should be in tracking package instead
-struct MattStandard end
-# This is just a first idea for handling tracking open to suggestions
-struct DiffEq
-  ds::Float64
-end
-
-@kwdef mutable struct UniversalParams{T, U<:Number} <: AbstractParams
-  tracking_method::T = MattStandard()
-  L::U               = 0.0
-  class::String      = "Marker"
-  name::String       = ""
+@kwdef mutable struct UniversalParams <: AbstractParams
+  tracking_method = nothing
+  L::Number       = 0.0
+  class::String   = "Marker"
+  name::String    = ""
 end
 
 # Use Accessors here for default bc super convenient for replacing entire (even mutable) type

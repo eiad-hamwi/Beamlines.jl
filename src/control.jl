@@ -1,5 +1,3 @@
-# Need a way to map symbols 
-
 mutable struct Controller
   fcns::Dict{Tuple{Union{Controller,LineElement},Symbol},Function}
   vars::NamedTuple

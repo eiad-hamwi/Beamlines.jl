@@ -42,8 +42,7 @@ Monitor(; kwargs...) = LineElement("Monitor"; kwargs...)
 monitor = Monitor(L=0.2)
 
 # Create a FODO beamline
-E_ref = 18e9 # 18 GeV
-bl = Beamline([qf, sf, d1, b1, d2, qd, sd, d3, b2, d4], E_ref)
+bl = Beamline([qf, sf, d1, b1, d2, qd, sd, d3, b2, d4], E_ref=-18e9) # 18 GeV
 
 # Now we can get the unnormalized field strengths:
 qf.B1
