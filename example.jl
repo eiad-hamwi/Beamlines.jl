@@ -30,6 +30,8 @@ m_thick.K1 == 0.16/2.0 # true
 
 # Whichever you enter first for a specific multipole - integrated/nonintegrated
 # and normalized/unnormalized - sets that value to be the independent variable
+# As in, if you enter K1L, then vary the reference rigidity and element length, 
+# K1L remains constant while K1, B1, and B1L would change
 
 # Misalignments are also supported:
 bad_quad = Quadrupole(K1=0.36, L=0.5, x_offset=0.2e-3, tilt=0.5e-3, y_rot=-0.5e-3)
@@ -43,13 +45,13 @@ sqf = SkewQuadrupole(K1=0.36, L=0.2)
 # Note that tilt1 specifies a tilt to only the K1 multipole.
 
 # Create a FODO beamline
-bl = Beamline([qf, sf, d1, b1, d2, qd, sd, d3, b2, d4], E_ref=18e9) # 18 GeV
+bl = Beamline([qf, sf, d1, b1, d2, qd, sd, d3, b2, d4]; Brho_ref=60.0)
 
 # Now we can get the unnormalized field strengths:
 qf.B1
 
 # We can also reset quantities:
-qf.B1 = 60.
+qf.B1 = 70.
 qf.K1 = 0.36
 
 # Set the tracking method of an element:
@@ -81,7 +83,7 @@ qd.s_downstream
 # Even the reference energy of the Beamline can be set as 
 # a TPSA variable:
 ΔE = @vars(D)[2]
-bl.E_ref += ΔE
+bl.Brho_ref += ΔE
 
 # Now e.g. unnormalized field strengths will be TPSA:
 qd.B1

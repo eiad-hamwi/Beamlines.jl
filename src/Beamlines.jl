@@ -22,7 +22,7 @@ export MattStandard,
        Controller,
        set!
 
-using GTPSA, Accessors
+using GTPSA, Accessors, StaticArrays
 import GTPSA: sincu, sinhcu
 
 # Reference energy in eV
@@ -52,6 +52,9 @@ include("bend.jl")
 include("control.jl")
 include("alignment.jl")
 include("keymaps.jl")
+
+#include("track_aos/track.jl")
+include("track/track.jl")
 
 
 #=
