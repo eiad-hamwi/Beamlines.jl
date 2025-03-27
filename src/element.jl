@@ -62,7 +62,11 @@ function Base.getproperty(ele::LineElement, key::Symbol)
   if key == :pdict 
     return getfield(ele, :pdict)
   elseif haskey(PARAMS_MAP, key) # To get parameters struct
-    return getindex(ele.pdict, PARAMS_MAP[key])
+    if haskey(ele.pdict, PARAMS_MAP[key])
+      return getindex(ele.pdict, PARAMS_MAP[key])
+    else
+      return nothing
+    end
   elseif haskey(VIRTUAL_GETTER_MAP, key) # Virtual properties override regular properties
       return VIRTUAL_GETTER_MAP[key](ele, key)
   elseif haskey(PROPERTIES_MAP, key)  # To get a property in a parameter struct

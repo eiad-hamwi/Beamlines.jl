@@ -1,22 +1,11 @@
 @kwdef mutable struct Beamline
   const line::Vector{LineElement}
-  const species::Species
-  Brho::Number
+  Brho_ref::Number # Will be NaN if not specified
 
   # Beamlines can be very long, so realistically only 
   # Base.Vector should be allowed.
-  function Beamline(line::Vector{LineElement}; E_ref=nothing, Brho=nothing, species::Species=ELECTRON)
-    if !isnothing(E_ref)
-      if !isnothing(Brho)
-        error("Please specify one of either Brho or E_ref")
-      else
-        Brho = calc_Brho(species, E_ref)
-      end
-    elseif isnothing(Brho)
-      error("Please specify one of either Brho or E_ref")
-    end
-
-    bl = new(line, species, Brho)
+  function Beamline(line::Vector{LineElement}; Brho_ref::Number=NaN)
+    bl = new(line, Brho_ref)
     for i in eachindex(line)
       if haskey(line[i].pdict, BeamlineParams)
         if line[i].beamline != bl
@@ -35,41 +24,24 @@
   end
 end
 
-function Base.getproperty(bl::Beamline, key::Symbol)
-  if key == :E_ref
-    return @noinline calc_E_ref(bl.species, bl.Brho)
-  else
-    return getfield(bl, key)
+
+function Base.getproperty(b::Beamline, key::Symbol)
+  field = getfield(b, key)
+  if key == :Brho_ref && isnan(field)
+    error("Unable to get magnetic rigidity: Brho_ref of the Beamline has not been set")
   end
+  return field
 end
-
-function Base.setproperty!(bl::Beamline, key::Symbol, value)
-  if key == :E_ref
-    Brho = @noinline calc_Brho(bl.species, value)
-    return setfield!(bl, :Brho, Brho)
-  else
-    return setfield!(bl, key, value)
-  end
-end
-
-# Make Brho a property
-# rho = p/(qB) -> B*rho = p/q
-# p = gamma*m*c*beta = E/c*beta
-# E = gamma*m*c^2
-# Brho = E/c*sqrt(1 - (m/E)^2)
-# beta = sqrt(1 - (mass / E_tot)^2)
-
-Base.propertynames(::Beamline) = (:line, :binfo, :Brho, :E_ref, :species)
 
 struct BeamlineParams <: AbstractParams
   beamline::Beamline
   beamline_index::Int
 end
 
-# Make E_ref and Brho (in beamline) be properties
+# Make E_ref and Brho_ref (in beamline) be properties
 # Also make s a property of BeamlineParams
 # Note that because BeamlineParams is immutable, not setting rn
-Base.propertynames(::BeamlineParams) = (:beamline, :beamline_index, :Brho, :E_ref, :species, :s, :s_downstream)
+Base.propertynames(::BeamlineParams) = (:beamline, :beamline_index, :Brho_ref, :s, :s_downstream)
 
 function Base.setproperty!(bp::BeamlineParams, key::Symbol, value)
   setproperty!(bp.beamline, key, value)
@@ -78,7 +50,7 @@ end
 # Because BeamlineParams contains an abstract type, "replacing" it 
 # is just modifying the field and returning itself
 function replace(bp::BeamlineParams, key::Symbol, value)
-  if key in (:E_ref,:Brho)
+  if key == :Brho_ref
     setproperty!(bp, key, value)
     return bp
   else
@@ -87,7 +59,7 @@ function replace(bp::BeamlineParams, key::Symbol, value)
 end
 
 function Base.getproperty(bp::BeamlineParams, key::Symbol)
-  if key in (:Brho, :E_ref, :species)
+  if key == :Brho_ref
     return getproperty(bp.beamline, key) 
   elseif key in (:s, :s_downstream)
     if key == :s
