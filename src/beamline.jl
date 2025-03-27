@@ -1,22 +1,22 @@
 @kwdef mutable struct Beamline
   const line::Vector{LineElement}
   const species::Species
-  E_ref::Number
+  Brho::Number
 
   # Beamlines can be very long, so realistically only 
   # Base.Vector should be allowed.
   function Beamline(line::Vector{LineElement}; E_ref=nothing, Brho=nothing, species::Species=ELECTRON)
-    if !isnothing(Brho)
-      if !isnothing(E_ref)
+    if !isnothing(E_ref)
+      if !isnothing(Brho)
         error("Please specify one of either Brho or E_ref")
       else
-        E_ref = calc_E_ref(species, Brho)
+        Brho = calc_Brho(species, E_ref)
       end
-    elseif isnothing(E_ref)
+    elseif isnothing(Brho)
       error("Please specify one of either Brho or E_ref")
     end
 
-    bl = new(line, species, E_ref)
+    bl = new(line, species, Brho)
     for i in eachindex(line)
       if haskey(line[i].pdict, BeamlineParams)
         if line[i].beamline != bl
@@ -36,17 +36,17 @@
 end
 
 function Base.getproperty(bl::Beamline, key::Symbol)
-  if key == :Brho
-    return @noinline calc_Brho(bl.species, bl.E_ref)
+  if key == :E_ref
+    return @noinline calc_E_ref(bl.species, bl.Brho)
   else
     return getfield(bl, key)
   end
 end
 
 function Base.setproperty!(bl::Beamline, key::Symbol, value)
-  if key == :Brho
-    E_ref = @noinline calc_E_ref(bl.species, value)
-    return setfield!(bl, :E_ref, E_ref)
+  if key == :E_ref
+    Brho = @noinline calc_Brho(bl.species, value)
+    return setfield!(bl, :Brho, Brho)
   else
     return setfield!(bl, key, value)
   end
@@ -59,7 +59,7 @@ end
 # Brho = E/c*sqrt(1 - (m/E)^2)
 # beta = sqrt(1 - (mass / E_tot)^2)
 
-Base.propertynames(::Beamline) = (:line, :binfo, :E_ref, :Brho, :species)
+Base.propertynames(::Beamline) = (:line, :binfo, :Brho, :E_ref, :species)
 
 struct BeamlineParams <: AbstractParams
   beamline::Beamline
@@ -69,7 +69,7 @@ end
 # Make E_ref and Brho (in beamline) be properties
 # Also make s a property of BeamlineParams
 # Note that because BeamlineParams is immutable, not setting rn
-Base.propertynames(::BeamlineParams) = (:beamline, :beamline_index, :E_ref, :Brho, :species, :s, :s_downstream)
+Base.propertynames(::BeamlineParams) = (:beamline, :beamline_index, :Brho, :E_ref, :species, :s, :s_downstream)
 
 function Base.setproperty!(bp::BeamlineParams, key::Symbol, value)
   setproperty!(bp.beamline, key, value)
