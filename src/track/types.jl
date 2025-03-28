@@ -85,3 +85,9 @@ function Bunch(;
 
   return Bunch(species, Brho_0, v)
 end
+
+
+function Particle(bunch::Bunch, idx::Integer=1)
+  v = bunch.v[idx] # StructArrays handles this!
+  return Particle(bunch.species, bunch.Brho_0, v)
+end
