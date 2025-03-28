@@ -3,26 +3,38 @@
 #= Beamline does not know about particles going through it. =#
 
 using StructArrays
-export Bunch, Linear, track!, ELECTRON, POSITRON, PROTON, ANTIPROTON
+export Bunch, Particle, Linear, track!, ELECTRON, POSITRON, PROTON, ANTIPROTON
 
 include("utils.jl")
 include("types.jl")
 
 struct Linear end
 
-function track!(bunch::Bunch, bl::Beamline)
+MAX_TEMPS(::Linear) = 1
+
+function track!(bunch::Bunch, bl::Beamline; work=nothing)
+  # Preallocate the temporaries if not provided
+  if isnothing(work)
+    n_temps = 0
+    for ele in bl.line
+      cur_n_temps = MAX_TEMPS(ele.tracking_method) 
+      n_temps = cur_n_temps > n_temps ? cur_n_temps : n_temps
+    end
+    work = map(t->zero(bunch.v.x), 1:n_temps)
+  end
+
   for ele in bl.line
-    @noinline track!(bunch, ele)
+    @noinline track!(bunch, ele; work=work)
   end
   return bunch
 end
 
-function track!(bunch::Bunch, ele::LineElement)
+function track!(bunch::Bunch, ele::LineElement; work=work)
   # Dispatch on the tracking method:
-  return track!(bunch, ele, ele.tracking_method)
+  return track!(bunch, ele, ele.tracking_method; work=work)
 end
 
-function track!(bunch::Bunch, ele::LineElement, ::Linear)
+function track!(bunch::Bunch, ele::LineElement, ::Linear; work=nothing)
   # Unpack the line element
   ma = ele.AlignmentParams
   bm = ele.BMultipoleParams
@@ -31,7 +43,10 @@ function track!(bunch::Bunch, ele::LineElement, ::Linear)
   Brho_ref = ele.Brho_ref
 
   # Function barrier (this function is now fully compiled)
-  return @noinline _track_linear!(bunch, ma, bm, bp, L, Brho_ref)
+  # For some reason, inlining this is faster/zero allocs
+  # copy-paste is slower and so is @noinline so I guess LLVM is 
+  # doing some kind of constant propagation while inlining this?
+  return @inline _track_linear!(bunch, ma, bm, bp, L, Brho_ref; work=work)
 end
 
 # Don't do anything if no AlignmentParams
@@ -56,7 +71,8 @@ function _track_linear!(
   bm, 
   bp,
   L, 
-  Brho_ref
+  Brho_ref;
+  work=nothing,
 )
   if !isnothing(bp)
     error("Bend tracking not implemented yet")
@@ -115,7 +131,8 @@ function _track_linear!(
     end
 
     # One temporary array, for 1000 Floats is 3 allocations on Julia v1.11
-    tmp = zero(fq)
+    
+    tmp = isnothing(work) ? zero(bunch.v.x) : work[1]
 
     # copy and copy! behavior by GTPSA may be modified in future (weirdness 
     # because TPS is mutable). For now 0 + with FastGTPSA! is workaround.
