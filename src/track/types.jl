@@ -7,11 +7,20 @@ Base.@kwdef struct Coord{T} <: FieldVector{4, T}
   py::T = 0.0
 end
 
-mutable struct Bunch{S,T<:StructVector{<:Coord}}
+abstract type MemoryLayout end
+struct AoS <: MemoryLayout end
+struct SoA <: MemoryLayout end
+
+mutable struct Bunch{A<:MemoryLayout,S,T}
   species::Species
   Brho_0::S
   const v::T
+  function Bunch{A}(species, Brho_0, v) where {A}
+    return new{A,typeof(Brho_0),typeof(v)}(species, Brho_0, v)
+  end
 end
+
+#Bunch{A}(species, Brho_0, v) = 
 
 struct Particle{S,T}
   species::Species
@@ -19,7 +28,22 @@ struct Particle{S,T}
   v::Coord{T}
 end
 
-Bunch(N; Brho_0=60.0, species=ELECTRON) = Bunch(x=rand(N), px=rand(N), y=rand(N), py=rand(N), Brho_0=Brho_0, species=species)
+function Bunch(N; mem=SoA, Brho_0=60.0, species=ELECTRON)
+  if mem == SoA
+    return Bunch{mem}(species, Brho_0, rand(N,4))
+  elseif mem == AoS
+    return Bunch{mem}(species, Brho_0, rand(4,N))
+  else
+    error("Invalid memory layout specification")
+  end
+end
+#=
+function Bunch(N; Brho_0=60.0, species=ELECTRON)
+  v = StructArray{Coord{Float64}}(rand(N,4), dims=2)
+  return Bunch(species, Brho_0, v)
+end
+=#
+#Bunch(N; Brho_0=60.0, species=ELECTRON) = Bunch(x=rand(N), px=rand(N), y=rand(N), py=rand(N), Brho_0=Brho_0, species=species)
 """
     Bunch(; 
       species::Species=ELECTRON, 
