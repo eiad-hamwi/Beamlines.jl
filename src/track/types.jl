@@ -20,8 +20,6 @@ mutable struct Bunch{A<:MemoryLayout,S,T}
   end
 end
 
-#Bunch{A}(species, Brho_0, v) = 
-
 struct Particle{S,T}
   species::Species
   Brho_0::S
@@ -38,12 +36,39 @@ function Bunch(N; mem=SoA, Brho_0=60.0, species=ELECTRON)
   end
 end
 #=
+function Base.iterate(bunch::Bunch{A}, state=0) where {A}
+  if A == AoS
+    if state+1 > size(bunch.v, 2)
+      return nothing
+    else
+      return (view(bunch.v, :, state+1), state+1)
+    end
+  elseif A == SoA
+    if state+1 > size(bunch.v, 1)
+      return nothing
+    else
+      return (view(bunch.v, state+1, :), state+1)
+    end
+  else
+    error("Unreachable")
+  end
+end
+
+Base.IteratorSize(bunch::Bunch{A}) where {A} = A == AoS ? size(bunch.v, 2) : size(bunch.v, 1)
+Base.length(bunch::Bunch) = length(bunch.v)
+Base.firstindex(bunch::Bunch) = firstindex(bunch.v)
+Base.getindex(bunch::Bunch, i) = getindex(bunch.v, i)
+Base.setindex!(bunch::Bunch, v, i) = setindex!(bunch.v, v, i)
+=#
+#=
 function Bunch(N; Brho_0=60.0, species=ELECTRON)
   v = StructArray{Coord{Float64}}(rand(N,4), dims=2)
   return Bunch(species, Brho_0, v)
 end
 =#
 #Bunch(N; Brho_0=60.0, species=ELECTRON) = Bunch(x=rand(N), px=rand(N), y=rand(N), py=rand(N), Brho_0=Brho_0, species=species)
+
+#=
 """
     Bunch(; 
       species::Species=ELECTRON, 
@@ -115,3 +140,4 @@ function Particle(bunch::Bunch, idx::Integer=1)
   v = bunch.v[idx] # StructArrays handles this!
   return Particle(bunch.species, bunch.Brho_0, v)
 end
+=#

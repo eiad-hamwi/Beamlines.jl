@@ -1,7 +1,5 @@
 using Revise, Beamlines, GTPSA, BenchmarkTools
 
-# This only needs to be specified if we input normalized field strengths
-
 function make_fodo(K1=0.40, L_quad=0.5, L_drift=5.0)
   qf = Quadrupole(K1=K1, L=L_quad, tracking_method=Linear())
   d1 = Drift(L=L_drift, tracking_method=Linear())
@@ -17,8 +15,19 @@ N_fodo = 1000
 
 bl = Beamline([ele for i in 1:N_fodo for ele in make_fodo(K1,L_quad,L_drift)]; Brho_ref=60.0)
 
-bunch = Bunch(1000, mem=Beamlines.AoS)
-track!(bunch, bl)
+N_particle = 100000
 
-bunch = Bunch(1000, mem=Beamlines.SoA)
-track!(bunch, bl)
+bunch_soa = Bunch(N_particle, mem=Beamlines.SoA)
+@btime track!($bunch_soa, $bl)
+
+bunch_aos = Bunch(N_particle, mem=Beamlines.AoS)
+@btime track!($bunch_aos, $bl)
+
+
+# We can get another x2 for SoA by using 32-bit floats:
+bunch_soa =Bunch{Beamlines.SoA}(Beamlines.ELECTRON, 60.0, rand(Float32, N_particle, 4))
+@btime track!($bunch_soa, $bl)
+
+# AoS is basically unchanged
+bunch_aos =Bunch{Beamlines.AoS}(Beamlines.ELECTRON, 60.0, rand(Float32, 4, N_particle))
+@btime track!($bunch_aos, $bl)
