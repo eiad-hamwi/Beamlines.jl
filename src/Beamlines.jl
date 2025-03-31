@@ -22,7 +22,7 @@ export MattStandard,
        Controller,
        set!
 
-using GTPSA, Accessors, StaticArrays
+using GTPSA, Accessors, StaticArrays, LoopVectorization
 import GTPSA: sincu, sinhcu
 
 # Reference energy in eV

@@ -30,7 +30,7 @@ function track!(bunch::Bunch, bl::Beamline; work=nothing)
   return bunch
 end
 
-function track!(bunch::Bunch, ele::LineElement; work=work)
+function track!(bunch::Bunch, ele::LineElement; work=nothing)
   # Dispatch on the tracking method:
   return track!(bunch, ele, ele.tracking_method; work=work)
 end
@@ -88,12 +88,10 @@ function _track_linear!(
   v = bunch.v
 
   if isnothing(bm) || length(bm.bdict) == 0 # Drift
-    for i in 1:N_particle
-      p = A == AoS ? view(bunch.v, :, i) : view(bunch.v, i, :)
-      @FastGTPSA! begin
-        p[1] += p[2] * L
-        p[3] += p[4] * L
-      end
+    bi = A == AoS ? transpose(bunch.v) : bunch.v
+    @turbo for i in 1:N_particle
+      bi[i,1] += bi[i,2] * L
+      bi[i,3] += bi[i,4] * L
     end
   else
     if length(bm.bdict) > 1 || !haskey(bm.bdict, 2)
@@ -142,19 +140,17 @@ function _track_linear!(
     
     tmp = zero(first(bunch.v))
     #isnothing(work) ? zero(bunch.v.x) : work[1]
-
+ 
     # copy and copy! behavior by GTPSA may be modified in future (weirdness 
     # because TPS is mutable). For now 0 + with FastGTPSA! is workaround.
-    for i in 1:N_particle
-      p = A == AoS ? view(bunch.v, :, i) : view(bunch.v, i, :)
-      @FastGTPSA! begin
-        tmp = 0 + p[fq]
-        p[fq] = cos(sqrtk*L)*p[fq] + L*sincu(sqrtk*L)*p[fp]
-        p[fp] = -sqrtk*sin(sqrtk*L)*tmp + cos(sqrtk*L)*p[fp]
-        tmp = 0 + p[dq]
-        p[dq] = cosh(sqrtk*L)*p[dq] + L*sinhcu(sqrtk*L)*p[dp]
-        p[dp] = sqrtk*sinh(sqrtk*L)*tmp + cosh(sqrtk*L)*p[dp]
-      end
+    bi = A == AoS ? transpose(bunch.v) : bunch.v
+    @turbo for i in 1:N_particle
+      tmp = 0 + bi[i,fq]
+      bi[i,fq] = cos(sqrtk*L)*bi[i,fq] + L*sincu(sqrtk*L)*bi[i,fp]
+      bi[i,fp] = -sqrtk*sin(sqrtk*L)*tmp + cos(sqrtk*L)*bi[i,fp]
+      tmp = 0 + bi[i,dq]
+      bi[i,dq] = cosh(sqrtk*L)*bi[i,dq] + L*sinhcu(sqrtk*L)*bi[i,dp]
+      bi[i,dp] = sqrtk*sinh(sqrtk*L)*tmp + cosh(sqrtk*L)*bi[i,dp]
     end
   end
 
