@@ -12,7 +12,7 @@ struct Linear end
 
 MAX_TEMPS(::Linear) = 1
 
-function track!(bunch::Bunch, bl::Beamline; work=nothing)
+function track!(bunch::Bunch{A}, bl::Beamline, bunch0::Bunch{B}; work=deepcopy(bunch0)) where {A,B}
   # Preallocate the temporaries if not provided
   #=
   if isnothing(work)
@@ -24,18 +24,29 @@ function track!(bunch::Bunch, bl::Beamline; work=nothing)
     work = map(t->zero(bunch.v.x), 1:n_temps)
   end
 =#
+  
+  b1 = bunch
   for ele in bl.line
-    @noinline track!(bunch, ele; work=work)
+    @noinline track!(b1, ele, work; work=work)
+    b1, work = work, b1
+  end
+
+  # if odd number of elements then bunch is good
+  if iseven(length(bl.line))
+    bunch.species = b1.species
+    bunch.Brho_0 = b1.Brho_0
+    #bunch.v .= b1.v
+    copy!(bunch.v, b1.v)
   end
   return bunch
 end
 
-function track!(bunch::Bunch, ele::LineElement; work=nothing)
+function track!(bunch::Bunch{A}, ele::LineElement, bunch0::Bunch{B}; work=nothing) where {A,B}
   # Dispatch on the tracking method:
-  return track!(bunch, ele, ele.tracking_method; work=work)
+  return track!(bunch, ele, bunch0, ele.tracking_method; work=work)
 end
 
-function track!(bunch::Bunch, ele::LineElement, ::Linear; work=nothing)
+function track!(bunch::Bunch{A}, ele::LineElement, bunch0::Bunch{B}, ::Linear; work=nothing) where {A,B}
   # Unpack the line element
   ma = ele.AlignmentParams
   bm = ele.BMultipoleParams
@@ -47,12 +58,12 @@ function track!(bunch::Bunch, ele::LineElement, ::Linear; work=nothing)
   # For some reason, inlining this is faster/zero allocs
   # copy-paste is slower and so is @noinline so I guess LLVM is 
   # doing some kind of constant propagation while inlining this?
-  return @inline _track_linear!(bunch, ma, bm, bp, L, Brho_ref; work=work)
+  return @inline _track_linear!(bunch, bunch0, ma, bm, bp, L, Brho_ref; work=work)
 end
 
 # Don't do anything if no AlignmentParams
 misalign!(bunch::Bunch, ::Nothing, ::Bool) = bunch
-
+#=
 # in = true for enter, false for exit
 function misalign!(bunch::Bunch, ma::AlignmentParams, in::Bool)
   if ma.x_rot != 0. || ma.y_rot != 0. || ma.tilt != 0.
@@ -67,31 +78,33 @@ function misalign!(bunch::Bunch, ma::AlignmentParams, in::Bool)
   end
   return bunch
 end
+=#
 
 function _track_linear!(
   bunch::Bunch{A}, 
+  bunch0::Bunch{B}, 
   ma,
   bm, 
   bp,
   L, 
   Brho_ref;
   work=nothing,
-) where {A}
+) where {A,B}
   if !isnothing(bp)
     error("Bend tracking not implemented yet")
   end
+  v = A == AoS ? transpose(bunch.v) : bunch.v
+  v0 = B == AoS ? transpose(bunch0.v) : bunch0.v
 
-  N_particle = A == AoS ? size(bunch.v, 2) : size(bunch.v, 1)
+  @assert size(v,1) == size(v0,1) "Number of particles in input/output bunches do not match!"
+  N_particle = size(v, 1)
 
   misalign!(bunch, ma, true)
 
-  v = bunch.v
-
   if isnothing(bm) || length(bm.bdict) == 0 # Drift
-    bi = A == AoS ? transpose(bunch.v) : bunch.v
     @turbo for i in 1:N_particle
-      bi[i,1] += bi[i,2] * L
-      bi[i,3] += bi[i,4] * L
+      v[i,1] = v0[i,1] + v0[i,2] * L
+      v[i,3] = v0[i,3] + v0[i,4] * L
     end
   else
     if length(bm.bdict) > 1 || !haskey(bm.bdict, 2)
@@ -136,21 +149,11 @@ function _track_linear!(
       sqrtk = sqrt(-K1)
     end
 
-    # One temporary array, for 1000 Floats is 3 allocations on Julia v1.11
-    
-    tmp = zero(first(bunch.v))
-    #isnothing(work) ? zero(bunch.v.x) : work[1]
- 
-    # copy and copy! behavior by GTPSA may be modified in future (weirdness 
-    # because TPS is mutable). For now 0 + with FastGTPSA! is workaround.
-    bi = A == AoS ? transpose(bunch.v) : bunch.v
     @turbo for i in 1:N_particle
-      tmp = 0 + bi[i,fq]
-      bi[i,fq] = cos(sqrtk*L)*bi[i,fq] + L*sincu(sqrtk*L)*bi[i,fp]
-      bi[i,fp] = -sqrtk*sin(sqrtk*L)*tmp + cos(sqrtk*L)*bi[i,fp]
-      tmp = 0 + bi[i,dq]
-      bi[i,dq] = cosh(sqrtk*L)*bi[i,dq] + L*sinhcu(sqrtk*L)*bi[i,dp]
-      bi[i,dp] = sqrtk*sinh(sqrtk*L)*tmp + cosh(sqrtk*L)*bi[i,dp]
+      v[i,fq] = cos(sqrtk*L)*v0[i,fq] + L*sincu(sqrtk*L)*v0[i,fp]
+      v[i,fp] = -sqrtk*sin(sqrtk*L)*v0[i,fq] + cos(sqrtk*L)*v0[i,fp]
+      v[i,dq] = cosh(sqrtk*L)*v0[i,dq] + L*sinhcu(sqrtk*L)*v0[i,dp]
+      v[i,dp] = sqrtk*sinh(sqrtk*L)*v0[i,dq] + cosh(sqrtk*L)*v0[i,dp]
     end
   end
 
