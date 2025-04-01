@@ -23,7 +23,6 @@ bunch_soa = Bunch(N_particle, mem=Beamlines.SoA)
 bunch_aos = Bunch(N_particle, mem=Beamlines.AoS)
 @btime track!($bunch_aos, $bl)
 
-
 # We can get another x2 for SoA by using 32-bit floats:
 bunch_soa =Bunch{Beamlines.SoA}(Beamlines.ELECTRON, 60.0, rand(Float32, N_particle, 4))
 @btime track!($bunch_soa, $bl)

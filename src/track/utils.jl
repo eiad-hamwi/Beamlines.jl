@@ -15,5 +15,14 @@ const POSITRON = Species("positron", M_ELECTRON,Q)
 const PROTON = Species("proton", M_PROTON,Q)
 const ANTIPROTON = Species("antiproton", M_PROTON,-Q)
 
-calc_Brho(species::Species, E_ref) = @FastGTPSA E_ref/C_LIGHT*sqrt(1-(species.mass/E_ref)^2)
-calc_E_ref(species::Species, Brho_ref) = @FastGTPSA sqrt((Brho_ref*C_LIGHT)^2 + species.mass^2)
+calc_Brho(species::Species, E) = @FastGTPSA E/C_LIGHT*sqrt(1-(species.mass/E)^2)
+calc_E(species::Species, Brho) = @FastGTPSA sqrt((Brho*C_LIGHT)^2 + species.mass^2)
+calc_gamma(species::Species, Brho) = @FastGTPSA sqrt((Brho*C_LIGHT/species.mass)^2+1)
+
+# sincu/sinhcu functions for float by Dan Abell.
+# Modified by Matt to handle eps for different float types.
+# Modified by matt to use ifelse.
+
+@inline sincu(z) = ifelse(abs(z) < sqrt(2*eps(z)), one(z), sin(z)/z)
+@inline sinhcu(z) = ifelse(abs(z) < sqrt(2*eps(z)), one(z), sinh(z)/z)
+
