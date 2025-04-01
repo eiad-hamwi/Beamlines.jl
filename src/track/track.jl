@@ -170,7 +170,7 @@ end
   @inbounds begin
     @FastGTPSA! v[i,1] += v[i,2] * L
     @FastGTPSA! v[i,3] += v[i,4] * L
-    @FastGTPSA! v[i,5] += v[i,6] * L/gamma_0
+    @FastGTPSA! v[i,5] += v[i,6] * L/gamma_0^2
   end
   return v
 end
@@ -187,7 +187,7 @@ end
     @FastGTPSA! work[1][i]  = 0 + v[i,dqi]
     @FastGTPSA! v[i,dqi] = cosh(sqrtk*L)*v[i,dqi] + L*sinhcu(sqrtk*L)*v[i,dpi]
     @FastGTPSA! v[i,dpi] = sqrtk*sinh(sqrtk*L)*work[1][i] + cosh(sqrtk*L)*v[i,dpi]
-    @FastGTPSA! v[i,5] = v[i,5] + v[i,6] * L/gamma_0
+    @FastGTPSA! v[i,5] = v[i,5] + v[i,6] * L/gamma_0^2
   end 
   return v
 end
