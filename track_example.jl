@@ -18,7 +18,9 @@ bl = Beamline([ele for i in 1:N_fodo for ele in make_fodo(K1,L_quad,L_drift)]; B
 N_particle = 100000
 
 bunch_soa = Bunch(N_particle, mem=Beamlines.SoA)
-@btime track!($bunch_soa, $bl)
+bunch_soa_out = deepcopy(bunch_soa)
+tmp = deepcopy(bunch_soa)
+@btime track!($bunch_soa_out, $bl, $bunch_soa; work=tmp)
 
 bunch_aos = Bunch(N_particle, mem=Beamlines.AoS)
 @btime track!($bunch_aos, $bl)

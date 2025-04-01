@@ -1,12 +1,3 @@
-
-# Static phase space coordinate vector
-Base.@kwdef struct Coord{T} <: FieldVector{4, T} 
-  x::T  = 0.0
-  px::T = 0.0
-  y::T  = 0.0
-  py::T = 0.0
-end
-
 abstract type MemoryLayout end
 struct AoS <: MemoryLayout end
 struct SoA <: MemoryLayout end
@@ -20,21 +11,17 @@ mutable struct Bunch{A<:MemoryLayout,S,T}
   end
 end
 
-struct Particle{S,T}
-  species::Species
-  Brho_0::S
-  v::Coord{T}
-end
-
 function Bunch(N; mem=SoA, Brho_0=60.0, species=ELECTRON)
   if mem == SoA
-    return Bunch{mem}(species, Brho_0, rand(N,4))
+    return Bunch{mem}(species, Brho_0, rand(N,6))
   elseif mem == AoS
-    return Bunch{mem}(species, Brho_0, rand(4,N))
+    return Bunch{mem}(species, Brho_0, rand(6,N))
   else
     error("Invalid memory layout specification")
   end
 end
+
+
 #=
 function Base.iterate(bunch::Bunch{A}, state=0) where {A}
   if A == AoS

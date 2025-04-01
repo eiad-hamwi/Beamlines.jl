@@ -12,41 +12,30 @@ struct Linear end
 
 MAX_TEMPS(::Linear) = 1
 
-function track!(bunch::Bunch{A}, bl::Beamline, bunch0::Bunch{B}; work=deepcopy(bunch0)) where {A,B}
+function track!(bunch::Bunch{A}, bl::Beamline; work=nothing) where {A}
   # Preallocate the temporaries if not provided
-  #=
   if isnothing(work)
     n_temps = 0
     for ele in bl.line
       cur_n_temps = MAX_TEMPS(ele.tracking_method) 
       n_temps = cur_n_temps > n_temps ? cur_n_temps : n_temps
     end
-    work = map(t->zero(bunch.v.x), 1:n_temps)
-  end
-=#
-  
-  b1 = bunch
-  for ele in bl.line
-    @noinline track!(b1, ele, work; work=work)
-    b1, work = work, b1
+    N_particle = A == AoS ? size(bunch.v, 2) : size(bunch.v, 1)
+    work = map(t->zeros(eltype(bunch.v), N_particle), 1:n_temps)
   end
 
-  # if odd number of elements then bunch is good
-  if iseven(length(bl.line))
-    bunch.species = b1.species
-    bunch.Brho_0 = b1.Brho_0
-    #bunch.v .= b1.v
-    copy!(bunch.v, b1.v)
+  for ele in bl.line
+    track!(bunch, ele; work=work)
   end
   return bunch
 end
 
-function track!(bunch::Bunch{A}, ele::LineElement, bunch0::Bunch{B}; work=nothing) where {A,B}
+function track!(bunch::Bunch{A}, ele::LineElement; work=nothing) where {A}
   # Dispatch on the tracking method:
-  return track!(bunch, ele, bunch0, ele.tracking_method; work=work)
+  return track!(bunch, ele, ele.tracking_method; work=work)
 end
 
-function track!(bunch::Bunch{A}, ele::LineElement, bunch0::Bunch{B}, ::Linear; work=nothing) where {A,B}
+function track!(bunch::Bunch{A}, ele::LineElement, ::Linear; work=nothing) where {A}
   # Unpack the line element
   ma = ele.AlignmentParams
   bm = ele.BMultipoleParams
@@ -58,54 +47,37 @@ function track!(bunch::Bunch{A}, ele::LineElement, bunch0::Bunch{B}, ::Linear; w
   # For some reason, inlining this is faster/zero allocs
   # copy-paste is slower and so is @noinline so I guess LLVM is 
   # doing some kind of constant propagation while inlining this?
-  return @inline _track_linear!(bunch, bunch0, ma, bm, bp, L, Brho_ref; work=work)
+  return @inline _track_linear!(bunch, ma, bm, bp, L, Brho_ref; work=work)
 end
 
 # Don't do anything if no AlignmentParams
-misalign!(bunch::Bunch, ::Nothing, ::Bool) = bunch
+
 #=
 # in = true for enter, false for exit
-function misalign!(bunch::Bunch, ma::AlignmentParams, in::Bool)
-  if ma.x_rot != 0. || ma.y_rot != 0. || ma.tilt != 0.
-    error("Rotational misalignments not implemented yet")
-  end
-  sgn = in ? -1 : 1
-  for i in 1:length(bunch.v.x)
-    @FastGTPSA! begin
-      bunch.v.x[i] += sgn*ma.x_offset
-      bunch.v.y[i] += sgn*ma.y_offset
-    end
-  end
-  return bunch
-end
+
 =#
 
 function _track_linear!(
   bunch::Bunch{A}, 
-  bunch0::Bunch{B}, 
-  ma,
-  bm, 
-  bp,
+  ma::Union{AlignmentParams,Nothing},
+  bm::Union{BMultipoleParams,Nothing}, 
+  bp::Union{BendParams,Nothing},
   L, 
   Brho_ref;
   work=nothing,
-) where {A,B}
+) where {A}
+
   if !isnothing(bp)
     error("Bend tracking not implemented yet")
   end
   v = A == AoS ? transpose(bunch.v) : bunch.v
-  v0 = B == AoS ? transpose(bunch0.v) : bunch0.v
-
-  @assert size(v,1) == size(v0,1) "Number of particles in input/output bunches do not match!"
   N_particle = size(v, 1)
-
-  misalign!(bunch, ma, true)
+  gamma_0 = calc_gamma(bunch.species, bunch.Brho_0)
+  
+  launch_kernel!(misalign!, N_particle, v, nothing, ma, -1)
 
   if isnothing(bm) || length(bm.bdict) == 0 # Drift
-    @turbo for i in 1:N_particle
-      v[i,1] = v0[i,1] + v0[i,2] * L
-      v[i,3] = v0[i,3] + v0[i,4] * L
-    end
+    launch_kernel!(linear_drift!, N_particle, v, nothing, L, gamma_0)
   else
     if length(bm.bdict) > 1 || !haskey(bm.bdict, 2)
       error("Currently only quadrupole tracking is supported")
@@ -134,30 +106,89 @@ function _track_linear!(
     # Now get K1 from the bunch itself:
     K1 = B1/bunch.Brho_0
 
-
     if K1 >= 0
-      fq = 1 #v.x
-      fp = 2 #v.px
-      dq = 3 #v.y
-      dp = 4 #v.py
+      fqi = 1 #v.x
+      fpi = 2 #v.px
+      dqi = 3 #v.y
+      dpi = 4 #v.py
       sqrtk = sqrt(K1)
     else
-      fq = 3 #v.y
-      fp = 4 #v.py
-      dq = 1 #v.x
-      dp = 2 #v.px
+      fqi = 3 #v.y
+      fpi = 4 #v.py
+      dqi = 1 #v.x
+      dpi = 2 #v.px
       sqrtk = sqrt(-K1)
     end
-
-    @turbo for i in 1:N_particle
-      v[i,fq] = cos(sqrtk*L)*v0[i,fq] + L*sincu(sqrtk*L)*v0[i,fp]
-      v[i,fp] = -sqrtk*sin(sqrtk*L)*v0[i,fq] + cos(sqrtk*L)*v0[i,fp]
-      v[i,dq] = cosh(sqrtk*L)*v0[i,dq] + L*sinhcu(sqrtk*L)*v0[i,dp]
-      v[i,dp] = sqrtk*sinh(sqrtk*L)*v0[i,dq] + cosh(sqrtk*L)*v0[i,dp]
-    end
+    wq = isnothing(work) ? [zeros(eltype(v), N_particle)] : work
+    launch_kernel!(linear_quad!, N_particle, v, wq, fqi, fpi, dqi, dpi, sqrtk, L, gamma_0)
   end
 
-  misalign!(bunch, ma, false)
+  launch_kernel!(misalign!, N_particle, v, nothing, ma, 1)
+
   return bunch
 end
 
+const REGISTER_SIZE = VectorizationBase.register_size()
+
+@inline function launch_kernel!(f!::F, N_particle, v::A, work, args...) where {F,A}
+  lanesize = Int(REGISTER_SIZE/sizeof(eltype(A))) # should be static
+  if eltype(A) <: SIMD.ScalarTypes && lanesize != 0 # do SIMD
+    lane = VecRange{lanesize}(0)
+    rmn = rem(N_particle, lanesize)
+    N_SIMD = N_particle - rmn
+    for i in 1:lanesize:N_SIMD
+      f!(lane+i, N_particle, v, work, args...)
+    end
+    # Do the remainder
+    for i in N_SIMD+1:N_particle
+      f!(i, N_particle, v, work, args...)
+    end
+  else
+    for i in 1:N_particle
+      f!(i, N_particle, v, work, args...)
+    end
+  end
+  return v
+end
+
+# Misalignment kernel
+misalign!(i, N_particle, v, work, ::Nothing, sgn) = v
+
+# sgn = -1 if entering, 1 if exiting
+function misalign!(i, N_particle, v, work, ma::AlignmentParams, sgn) #x_rot, y_rot, tilt,
+  @assert last(i) <= N_particle "Out of bounds!"  # Use last because VecRange SIMD
+  @assert sgn == -1 || sgn == 1 "Incorrect value for sgn (use -1 if entering, 1 if exiting)"
+  @inbounds begin
+    @FastGTPSA! v[i,1] += sgn*ma.x_offset
+    @FastGTPSA! v[i,3] += sgn*ma.y_offset
+  end
+  return v
+end
+
+# Drift kernel
+@inline function linear_drift!(i, N_particle, v, work, L, gamma_0)
+  @assert last(i) <= N_particle "Out of bounds!"  # Use last because VecRange SIMD
+  @inbounds begin
+    @FastGTPSA! v[i,1] += v[i,2] * L
+    @FastGTPSA! v[i,3] += v[i,4] * L
+    @FastGTPSA! v[i,5] += v[i,6] * L/gamma_0
+  end
+  return v
+end
+
+# Quadrupole kernel
+@inline function linear_quad!(i, N_particle, v, work, fqi, fpi, dqi, dpi, sqrtk, L, gamma_0)
+  @assert last(i) <= N_particle "Out of bounds!"  # Use last because VecRange SIMD
+  @assert all(t->t<=4 && t>=1, (fqi, fpi, dqi, dpi)) "Invalid focus/defocus indices for quadrupole"
+  @assert length(work) >= 1 && length(work[1]) == N_particle "At least 1 work vector of length $N_particle is required for linear_quad!"
+  @inbounds begin
+    @FastGTPSA! work[1][i]  = 0 + v[i,fqi]
+    @FastGTPSA! v[i,fqi] = cos(sqrtk*L)*v[i,fqi] + L*sincu(sqrtk*L)*v[i,fpi]
+    @FastGTPSA! v[i,fpi] = -sqrtk*sin(sqrtk*L)*work[1][i] + cos(sqrtk*L)*v[i,fpi]
+    @FastGTPSA! work[1][i]  = 0 + v[i,dqi]
+    @FastGTPSA! v[i,dqi] = cosh(sqrtk*L)*v[i,dqi] + L*sinhcu(sqrtk*L)*v[i,dpi]
+    @FastGTPSA! v[i,dpi] = sqrtk*sinh(sqrtk*L)*work[1][i] + cosh(sqrtk*L)*v[i,dpi]
+    @FastGTPSA! v[i,5] = v[i,5] + v[i,6] * L/gamma_0
+  end 
+  return v
+end
