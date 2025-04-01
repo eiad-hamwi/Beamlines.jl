@@ -1,9 +1,7 @@
 # Tracking functions in this file to be moved to other package
 
 #= Beamline does not know about particles going through it. =#
-
-using StructArrays
-export Bunch, Particle, Linear, track!, ELECTRON, POSITRON, PROTON, ANTIPROTON
+export Bunch, Linear, track!, ELECTRON, POSITRON, PROTON, ANTIPROTON
 
 include("utils.jl")
 include("types.jl")
@@ -73,8 +71,10 @@ function _track_linear!(
   v = A == AoS ? transpose(bunch.v) : bunch.v
   N_particle = size(v, 1)
   gamma_0 = calc_gamma(bunch.species, bunch.Brho_0)
-  
-  launch_kernel!(misalign!, N_particle, v, nothing, ma, -1)
+
+  if !isnothing(ma)
+    launch_kernel!(misalign!, N_particle, v, nothing, ma.x_offset, ma.y_offset, -1)
+  end
 
   if isnothing(bm) || length(bm.bdict) == 0 # Drift
     launch_kernel!(linear_drift!, N_particle, v, nothing, L, gamma_0)
@@ -123,7 +123,9 @@ function _track_linear!(
     launch_kernel!(linear_quad!, N_particle, v, wq, fqi, fpi, dqi, dpi, sqrtk, L, gamma_0)
   end
 
-  launch_kernel!(misalign!, N_particle, v, nothing, ma, 1)
+  if !isnothing(ma)
+    launch_kernel!(misalign!, N_particle, v, nothing, ma.x_offset, ma.y_offset, 1)
+  end
 
   return bunch
 end
@@ -132,7 +134,7 @@ const REGISTER_SIZE = VectorizationBase.register_size()
 
 @inline function launch_kernel!(f!::F, N_particle, v::A, work, args...) where {F,A}
   lanesize = Int(REGISTER_SIZE/sizeof(eltype(A))) # should be static
-  if eltype(A) <: SIMD.ScalarTypes && lanesize != 0 # do SIMD
+  if A <: SIMD.FastContiguousArray && eltype(A) <: SIMD.ScalarTypes && lanesize != 0 # do SIMD
     lane = VecRange{lanesize}(0)
     rmn = rem(N_particle, lanesize)
     N_SIMD = N_particle - rmn
@@ -151,11 +153,8 @@ const REGISTER_SIZE = VectorizationBase.register_size()
   return v
 end
 
-# Misalignment kernel
-misalign!(i, N_particle, v, work, ::Nothing, sgn) = v
-
 # sgn = -1 if entering, 1 if exiting
-function misalign!(i, N_particle, v, work, ma::AlignmentParams, sgn) #x_rot, y_rot, tilt,
+function misalign!(i, N_particle, v, work, x_offset, y_offset, sgn) #x_rot, y_rot, tilt,
   @assert last(i) <= N_particle "Out of bounds!"  # Use last because VecRange SIMD
   @assert sgn == -1 || sgn == 1 "Incorrect value for sgn (use -1 if entering, 1 if exiting)"
   @inbounds begin

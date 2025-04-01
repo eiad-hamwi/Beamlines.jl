@@ -18,13 +18,10 @@ bl = Beamline([ele for i in 1:N_fodo for ele in make_fodo(K1,L_quad,L_drift)]; B
 N_particle = 100000
 
 bunch_soa = Bunch(N_particle, mem=Beamlines.SoA)
-bunch_soa_out = deepcopy(bunch_soa)
-tmp = deepcopy(bunch_soa)
-@btime track!($bunch_soa_out, $bl, $bunch_soa; work=tmp)
+@btime track!($bunch_soa, $bl)
 
 bunch_aos = Bunch(N_particle, mem=Beamlines.AoS)
 @btime track!($bunch_aos, $bl)
-
 
 # We can get another x2 for SoA by using 32-bit floats:
 bunch_soa =Bunch{Beamlines.SoA}(Beamlines.ELECTRON, 60.0, rand(Float32, N_particle, 4))
