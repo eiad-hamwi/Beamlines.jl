@@ -51,7 +51,7 @@ sqf = SkewQuadrupole(K1=0.36, L=0.2)
 # Note that tilt1 specifies a tilt to only the K1 multipole.
 
 # Create a FODO beamline
-bl = Beamline([qf, sf, d1, b1, d2, qd, sd, d3, b2, d4], E_ref=18e9) # 18 GeV
+bl = Beamline([qf, sf, d1, b1, d2, qd, sd, d3, b2, d4], Brho_ref=60.0)
 
 # Now we can get the unnormalized field strengths:
 qf.B1
@@ -88,8 +88,8 @@ qd.s_downstream
 
 # Even the reference energy of the Beamline can be set as 
 # a TPSA variable:
-ΔE = @vars(D)[2]
-bl.E_ref += ΔE
+ΔBrho_ref = @vars(D)[2]
+bl.Brho_ref += ΔBrho_ref
 
 # Now e.g. unnormalized field strengths will be TPSA:
 qd.B1
