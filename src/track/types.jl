@@ -4,14 +4,14 @@ struct SoA <: MemoryLayout end
 
 mutable struct Bunch{A<:MemoryLayout,S,T}
   species::Species
-  Brho_0::S
+  Brho_0::S       
   const v::T
   function Bunch{A}(species, Brho_0, v) where {A}
     return new{A,typeof(Brho_0),typeof(v)}(species, Brho_0, v)
   end
 end
 
-function Bunch(N; mem=SoA, Brho_0=60.0, species=ELECTRON)
+function Bunch(N::Integer; mem=SoA, Brho_0=60.0, species=ELECTRON)
   if mem == SoA
     return Bunch{mem}(species, Brho_0, rand(N,6))
   elseif mem == AoS
@@ -19,6 +19,17 @@ function Bunch(N; mem=SoA, Brho_0=60.0, species=ELECTRON)
   else
     error("Invalid memory layout specification")
   end
+end
+
+function Bunch(v::AbstractArray; mem=SoA, Brho_0=60.0, species=ELECTRON)
+  if mem == SoA
+    size(v, 2) == 6 || error("For SoA the number of columns must be equal to 6")
+  elseif mem == AoS
+    size(v, 1) == 6 || error("For SoA the number of rows must be equal to 6")
+  else
+    error("Invalid memory layout specification")
+  end
+  return Bunch{mem}(species, Brho_0, v)
 end
 
 

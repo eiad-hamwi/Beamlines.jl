@@ -134,7 +134,7 @@ const REGISTER_SIZE = VectorizationBase.register_size()
 
 @inline function launch_kernel!(f!::F, N_particle, v::A, work, args...) where {F,A}
   lanesize = Int(REGISTER_SIZE/sizeof(eltype(A))) # should be static
-  if A <: SIMD.FastContiguousArray && eltype(A) <: SIMD.ScalarTypes && lanesize != 0 # do SIMD
+  #=if A <: SIMD.FastContiguousArray && eltype(A) <: SIMD.ScalarTypes && lanesize != 0 # do SIMD
     lane = VecRange{lanesize}(0)
     rmn = rem(N_particle, lanesize)
     N_SIMD = N_particle - rmn
@@ -145,11 +145,11 @@ const REGISTER_SIZE = VectorizationBase.register_size()
     for i in N_SIMD+1:N_particle
       f!(i, N_particle, v, work, args...)
     end
-  else
+  else=#
     for i in 1:N_particle
       f!(i, N_particle, v, work, args...)
     end
-  end
+  #end
   return v
 end
 

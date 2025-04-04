@@ -15,7 +15,7 @@ const POSITRON = Species("positron", M_ELECTRON,Q)
 const PROTON = Species("proton", M_PROTON,Q)
 const ANTIPROTON = Species("antiproton", M_PROTON,-Q)
 
-calc_Brho(species::Species, E) = @FastGTPSA E/C_LIGHT*sqrt(1-(species.mass/E)^2)
+calc_Brho(species::Species, E) = @FastGTPSA sqrt(E^2-species.mass^2)/C_LIGHT
 calc_E(species::Species, Brho) = @FastGTPSA sqrt((Brho*C_LIGHT)^2 + species.mass^2)
 calc_gamma(species::Species, Brho) = @FastGTPSA sqrt((Brho*C_LIGHT/species.mass)^2+1)
 
