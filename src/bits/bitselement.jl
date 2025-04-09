@@ -1,5 +1,6 @@
-struct BitsLineElement{T,A,B,C}
+struct BitsLineElement{S,T,A,B,C}
   tracking_method::UInt
+  L::S
   Brho_ref::T
   BMultipoleParams::A
   BendParams::B
@@ -22,23 +23,27 @@ function tobits(bl::Beamline, ::Type{T}=bitseltype(bl)) where {T}
   return bitsline
 end
 
-function BitsLineElement{T,A,B,C}(ele::LineElement) where {T,A,B,C}
-  tracking_method = Base.hash(typeof(ele.tracking_method))::UInt
+function BitsLineElement{S,T,A,B,C}(ele::LineElement) where {S,T,A,B,C}
+  tracking_method = objectid(ele.tracking_method)::UInt
+  L = convert(S, ele.L)::S
   Brho_ref = convert(T, getfield(ele.BeamlineParams.beamline, :Brho_ref))::T
   bmultipoleparams = convert(A, ele.BMultipoleParams)::A
   bendparams = convert(B, ele.BendParams)::B
   alignmentparams = convert(C, ele.AlignmentParams)::C
-  return BitsLineElement{T,A,B,C}(tracking_method, Brho_ref, bmultipoleparams, bendparams, alignmentparams)
+  return BitsLineElement{S,T,A,B,C}(tracking_method, L, Brho_ref, bmultipoleparams, bendparams, alignmentparams)
 end
 
 # First pass to get the BitsLineElement type
 # This should only be done ONCE ever for a beamline, even if updates occur
 function bitseltype(bl::Beamline)
+  S = Float16
   T = typeof(getfield(bl, :Brho_ref))
   A = Nothing
   B = Nothing
   C = Nothing
   for ele in bl.line
+    S = promote_type(typeof(ele.L),S)
+
     a = ele.BMultipoleParams
     if !isnothing(a)
       if A == Nothing
@@ -72,5 +77,5 @@ function bitseltype(bl::Beamline)
     end
   end
 
-  return BitsLineElement{T,A,B,C}
+  return BitsLineElement{S,T,A,B,C}
 end
