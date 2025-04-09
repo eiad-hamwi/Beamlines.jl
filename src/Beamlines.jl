@@ -9,6 +9,8 @@ export MattStandard,
        UniversalParams, 
        BMultipoleParams, 
        BeamlineParams,
+       AlignmentParams,
+       BendParams,
        BMultipole,
        Drift,
        Solenoid,
@@ -22,7 +24,15 @@ export MattStandard,
        Controller,
        set!
 
-using GTPSA, Accessors, StaticArrays, LoopVectorization, SIMD, VectorizationBase, Polyester
+using GTPSA, 
+      Accessors, 
+      StaticArrays, 
+      LoopVectorization, 
+      SIMD, 
+      VectorizationBase, 
+      Polyester,
+      OrderedCollections
+
 import GTPSA: sincu, sinhcu
 
 # Reference energy in eV
@@ -51,9 +61,11 @@ include("bend.jl")
 include("control.jl")
 include("alignment.jl")
 include("keymaps.jl")
+include("bits/bitsparams.jl")
+include("bits/bitselement.jl")
 
 #include("track_aos/track.jl")
-include("track/track.jl")
+#include("track/track.jl")
 
 
 #=

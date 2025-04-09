@@ -132,3 +132,13 @@ dx = @vars(D)[1]
 c3.dx = dx
 qf.K1
 qd.K1
+
+# Beamlines.jl also provides functionality to convert the Beamline to a fully isbits type.
+# This may be useful in cases where the Beamline is mostly static and you would like to 
+# put the entire line on a GPU, for example.
+qf = Quadrupole(K1=0.36, L=0.5)
+d1 = Drift(L=1.6)
+qd = Quadrupole(K1=-qf.K1, L=0.5)
+d2 = Drift(L=1.6)
+
+bl = Beamline([qf, d1, qd, d2])

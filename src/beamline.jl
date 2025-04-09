@@ -28,6 +28,7 @@ end
 function Base.getproperty(b::Beamline, key::Symbol)
   field = getfield(b, key)
   if key == :Brho_ref && isnan(field)
+    #@warn "Brho_ref has not been set: using default value of NaN"
     error("Unable to get magnetic rigidity: Brho_ref of the Beamline has not been set")
   end
   return field

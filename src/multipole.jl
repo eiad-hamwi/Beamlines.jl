@@ -10,6 +10,9 @@ mutable struct BMultipole{T<:Number}
   BMultipole{T}(args...) where {T} = new{T}(args...)
 end
 
+Base.eltype(::BMultipole{T}) where {T} = T
+Base.eltype(::Type{BMultipole{T}}) where {T} = T
+
 function Base.hasproperty(bm::BMultipole, key::Symbol)
   if key in fieldnames(BMultipole)
     return true
@@ -220,6 +223,9 @@ end
 end
 
 Base.eltype(::BMultipoleParams{T}) where {T} = T
+Base.eltype(::Type{BMultipoleParams{T}}) where {T} = T
+
+Base.length(b::BMultipoleParams) = length(b.bdict)
 
 function Base.hasproperty(b::BMultipoleParams, key::Symbol)
   if key in fieldnames(BMultipoleParams)

@@ -9,3 +9,6 @@
   end
 end
 
+Base.eltype(::AlignmentParams{T}) where {T} = T
+Base.eltype(::Type{AlignmentParams{T}}) where {T} = T
+
