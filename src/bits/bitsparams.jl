@@ -14,36 +14,58 @@ be a TPSA.
 =#
 abstract type AbstractBitsParams end
 
-Base.convert(::Type{T}, p::Union{AbstractParams,Nothing}) where {T <: AbstractBitsParams} = T(p)
+#Base.convert(::Type{T}, p::Union{AbstractParams,Nothing}) where {T <: AbstractBitsParams} = T(p)
 
 
 # BMultipoleParams
 struct BitsBMultipole{T<:Number}
   strength::T      
   tilt::T          
-  order::Int       
-  normalized::Bool 
-  integrated::Bool 
+  # order::Int       # tobits conversion only stores order as key in the BitsBMultipoleDict
+  # normalized::Bool # tobits conversion always gives unnormalized
+  # integrated::Bool # tobits conversion always gives integrated
 end
 
-Base.convert(::Type{T}, bm::BMultipole) where {T<:BitsBMultipole} = T(bm)
+@inline function Base.getproperty(bm::BitsBMultipole, key::Symbol)
+  if key == :normalized
+    return false
+  elseif key == :integrated
+    return true
+  else
+    return getfield(bm, key)
+  end
+end
+
+#Base.convert(::Type{T}, bm::BMultipole) where {T<:BitsBMultipole} = T(bm)
 
 Base.eltype(::BitsBMultipole{T}) where {T} = T
 Base.eltype(::Type{BitsBMultipole{T}}) where {T} = T
 
 # Default:
 function BitsBMultipole{T}() where T <: Number
-  return BitsBMultipole{T}(T(0), T(0), -1, false, false)
+  return BitsBMultipole{T}(T(NaN), T(NaN))
 end
 
-function BitsBMultipole{T}(bm::BMultipole) where T <: Number
-  return BitsBMultipole{T}(T(bm.strength), T(bm.tilt), bm.order, bm.normalized, bm.integrated)
+function BitsBMultipole{T}(bm::BMultipole, L, Brho_ref=nothing) where T <: Number
+  if bm.normalized
+    if isnothing(Brho_ref)
+      error("BitsBMultipole only stores the unnormalized strength, and this BMultipole is normalized: please provide Brho_ref")
+    else
+      strength = bm.strength * Brho_ref
+    end
+  else
+    strength = bm.strength
+  end
+
+  if !bm.integrated
+    strength *= L
+  end
+  return BitsBMultipole{T}(T(strength), T(bm.tilt))
 end
 
-const BitsBMultipoleDict{N,T} = LittleDict{Int, BitsBMultipole{T}, SVector{N,Int}, SVector{N, BitsBMultipole{T}}} where {N,T}
+const BitsBMultipoleDict{N,T} = LittleDict{Int8, BitsBMultipole{T}, SVector{N,Int8}, SVector{N, BitsBMultipole{T}}} where {N,T}
 
 struct BitsBMultipoleParams{N,T} <: AbstractBitsParams
-  isactive::Bool
   bdict::BitsBMultipoleDict{N,T}
 end
 
@@ -54,16 +76,18 @@ Base.length(::BitsBMultipoleParams{N}) where {N} = N
 Base.length(::Type{<:BitsBMultipoleParams{N}}) where {N} = N
 
 # Default:
-function BitsBMultipoleParams{N,T}(::Nothing=nothing) where {N,T}
-  k = StaticArrays.sacollect(SVector{N,Int}, -1 for i in 1:N)
+function BitsBMultipoleParams{N,T}(::Nothing, L, Brho_ref=nothing) where {N,T}
+  k = StaticArrays.sacollect(SVector{N,Int8}, -1 for i in 1:N)
   v = StaticArrays.sacollect(SVector{N, BitsBMultipole{T}}, BitsBMultipole{T}() for i in 1:N)
-  return BitsBMultipoleParams{N,T}(false, BitsBMultipoleDict{N,T}(k,v))
+  return BitsBMultipoleParams{N,T}(BitsBMultipoleDict{N,T}(k,v))
 end
 
-function BitsBMultipoleParams{N,T}(b::BMultipoleParams) where {N,T}
+function BitsBMultipoleParams{N,T}(b::BMultipoleParams, L, Brho_ref=nothing) where {N,T}
+  # Note that with the dict, if the FIRST key is -1 then all of it is zero
+  # this is a quick check for if it is inactive
   ki = keys(b.bdict)
   vi = values(b.bdict)
-  k = StaticArrays.sacollect(SVector{N,Int}, -1 for i in 1:N)
+  k = StaticArrays.sacollect(SVector{N,Int8}, -1 for i in 1:N)
   i=1
   for kii in ki
     k = @set k[i] = kii
@@ -72,31 +96,30 @@ function BitsBMultipoleParams{N,T}(b::BMultipoleParams) where {N,T}
   v = StaticArrays.sacollect(SVector{N, BitsBMultipole{T}}, BitsBMultipole{T}() for i in 1:N)
   i = 1
   for vii in vi
-    v = @set v[i] = BitsBMultipole{T}(vii)
+    v = @set v[i] = BitsBMultipole{T}(vii, L, Brho_ref)
     i += 1
   end
-  return BitsBMultipoleParams{N,T}(true, BitsBMultipoleDict{N,T}(k,v))
+  return BitsBMultipoleParams{N,T}(BitsBMultipoleDict{N,T}(k,v))
 end
 
 # BendParams
 struct BitsBendParams{T<:Number} <: AbstractBitsParams
-  isactive::Bool
   g::T      
   e1::T     
   e2::T     
 end
 
+# inactive here means NaNs
 function BitsBendParams{T}(::Nothing=nothing) where T <: Number
-  return BitsBendParams{T}(false, T(0), T(0), T(0))
+  return BitsBendParams{T}(T(NaN), T(NaN), T(NaN))
 end
 
 function BitsBendParams{T}(bp::BendParams) where T <: Number
-  return BitsBendParams{T}(true, T(bp.g), T(bp.e1), T(bp.e2))
+  return BitsBendParams{T}(T(bp.g), T(bp.e1), T(bp.e2))
 end
 
 # AlignmentParams
 struct BitsAlignmentParams{T<:Number} <: AbstractBitsParams
-  isactive::Bool
   x_offset::T 
   y_offset::T 
   x_rot::T    
@@ -105,11 +128,11 @@ struct BitsAlignmentParams{T<:Number} <: AbstractBitsParams
 end
 
 function BitsAlignmentParams{T}(::Nothing=nothing) where T <: Number
-  return BitsAlignmentParams{T}(false, T(0), T(0), T(0), T(0), T(0))
+  return BitsAlignmentParams{T}(T(NaN), T(NaN), T(NaN), T(NaN), T(NaN))
 end
 
 function BitsAlignmentParams{T}(ma::AlignmentParams) where T <: Number
-  return BitsAlignmentParams{T}(true, T(ma.x_offset), T(ma.y_offset), T(ma.x_rot), T(ma.y_rot), T(ma.tilt))
+  return BitsAlignmentParams{T}(T(ma.x_offset), T(ma.y_offset), T(ma.x_rot), T(ma.y_rot), T(ma.tilt))
 end
 
 

@@ -142,3 +142,7 @@ qd = Quadrupole(K1=-qf.K1, L=0.5)
 d2 = Drift(L=1.6)
 
 bl = Beamline([qf, d1, qd, d2])
+bit_LE_type = Beamlines.bitseltype(bl)
+bitbl = Beamlines.tobits(bl, bit_LE_type) # Vector of BitsLineElement
+
+isbitstype(eltype(bitbl)) == true # true
