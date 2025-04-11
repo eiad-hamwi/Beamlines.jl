@@ -9,7 +9,7 @@ struct BitsBeamline{T1,T2,T3,T4,T5,T6,T7,T8,T9,T10,T11,T12,T13,T14,T15,T16}
 
   order::T6      # Each element is a SVector of the orders
   strength::T7   # Each element is a SVector of the strengths
-  tiltm::T8      # Each element is a SVector of the tilts
+  tiltm::T8       # Each element is a SVector of the tilts
 
   g::T9
   e1::T10
@@ -65,9 +65,9 @@ function bitsbltype(bl::Beamline, arr::Type{T}=SVector{length(bl.line)}) where {
 
       # Then check the lengths:
       if length(bmp) > length(order)
-        order = similar_type(order, Size(length(bmp)))
-        strength = similar_type(strength, Size(length(bmp)))
-        tiltm = tiltm == Nothing ? Nothing : similar_type(tiltm, Size(length(bmp)))
+        order = similar_type(order, Size(bmp))
+        strength = similar_type(strength, Size(bmp))
+        tiltm = tiltm == Nothing ? Nothing : similar_type(tiltm, Size(bmp))
       end
       # Now check the each multipole - we have to do this bc only 
       # unnormalized+integrated is stored in BitsBeamLine. Also need 
@@ -141,100 +141,6 @@ function bitsbltype(bl::Beamline, arr::Type{T}=SVector{length(bl.line)}) where {
   }
 end
 
-
-function tobits(bl::Beamline, ::Type{BBL}=bitsbltype(bl)) where {BBL}
-  line = bl.line
-  N_ele = length(line)
-  ft = fieldtypes(BBL)
-  # Construct and set default values:
-  tracking_method       = ft[ 1] == Nothing ? nothing : (t = Vector{eltype(ft[ 1])}(undef, N_ele); t .= 0x0; t)
-  tracking_method_extras= ft[ 2] == Nothing ? nothing : (t = Vector{eltype(ft[ 2])}(undef, N_ele); t .= zeros(eltype(t), N_ele); t)
-  repeat_next_n_eles    = ft[ 3] == Nothing ? nothing : (t = Vector{eltype(ft[ 3])}(undef, N_ele); t .= nothing; t)
-  n_repeat              = ft[ 4] == Nothing ? nothing : (t = Vector{eltype(ft[ 4])}(undef, N_ele); t .= nothing; t)
-  L                     = ft[ 5] == Nothing ? nothing : (t = Vector{eltype(ft[ 5])}(undef, N_ele); t .= 0; t)
-  order                 = ft[ 6] == Nothing ? nothing : (t = Vector{eltype(ft[ 6])}(undef, N_ele); t .= zeros(eltype(t), N_ele); t)
-  strength              = ft[ 7] == Nothing ? nothing : (t = Vector{eltype(ft[ 7])}(undef, N_ele); t .= zeros(eltype(t), N_ele); t)
-  tiltm                 = ft[ 8] == Nothing ? nothing : (t = Vector{eltype(ft[ 8])}(undef, N_ele); t .= zeros(eltype(t), N_ele); t)
-  g                     = ft[ 9] == Nothing ? nothing : (t = Vector{eltype(ft[ 9])}(undef, N_ele); t .= 0; t)
-  e1                    = ft[10] == Nothing ? nothing : (t = Vector{eltype(ft[10])}(undef, N_ele); t .= 0; t)
-  e2                    = ft[11] == Nothing ? nothing : (t = Vector{eltype(ft[11])}(undef, N_ele); t .= 0; t)
-  x_offset              = ft[12] == Nothing ? nothing : (t = Vector{eltype(ft[12])}(undef, N_ele); t .= 0; t)
-  y_offset              = ft[13] == Nothing ? nothing : (t = Vector{eltype(ft[13])}(undef, N_ele); t .= 0; t)
-  x_rot                 = ft[14] == Nothing ? nothing : (t = Vector{eltype(ft[14])}(undef, N_ele); t .= 0; t)
-  y_rot                 = ft[15] == Nothing ? nothing : (t = Vector{eltype(ft[15])}(undef, N_ele); t .= 0; t)
-  tilt                  = ft[16] == Nothing ? nothing : (t = Vector{eltype(ft[16])}(undef, N_ele); t .= 0; t)
-
-  for i in 1:N_ele
-    ele = line[i]
-    if !isnothing(tracking_method)        tracking_method[i]        = TRACKING_METHOD_MAP[typeof(ele.tracking_method)] end
-    if !isnothing(tracking_method_extras) tracking_method_extras[i] = get_promoted_tm_extras(eltype(ft[2]), ele.tracking_method) end
-    #if !isnothing(repeat_next_n_eles)     repeat_next_n_eles[i]     = 
-    #if !isnothing(n_repeat)               n_repeat[i]               =     
-    if !isnothing(L)                      L[i]                      = ele.L  end
-    
-    if !isnothing(ele.BMultipoleParams)
-      bmp = ele.BMultipoleParams
-      orderi = -ones(eltype(ft[6]))
-      strengthi = zeros(eltype(ft[7]))
-      tiltmi = isnothing(tiltm) ? nothing : zeros(eltype(ft[8]))
-      j = 1
-      for (k,v) in bmp.bdict
-        @reset orderi[j] = k
-        @reset strengthi[j] = eltype(strengthi)(v.strength)
-        if v.normalized
-          @reset strengthi[j] *= eltype(strengthi)(ele.Brho_ref)
-        end
-        if !v.integrated
-          @reset strengthi[j] *= eltype(strengthi)(ele.L)
-        end
-        if !isnothing(tiltm)
-          @reset tiltmi[j] = eltype(tiltmi)(v.tilt)
-        end
-        j += 1
-      end
-      order[i] = orderi
-      strength[i] = strengthi
-      if !isnothing(tiltm) tiltm[i] = tiltmi end
-    end
-
-    if haskey(ele.pdict, BendParams)
-      if !isnothing(g)  g[i]  = ele.g end
-      if !isnothing(e1) e1[i] = ele.e1 end
-      if !isnothing(e2) e2[i] = ele.e2 end
-    end
-    if haskey(ele.pdict, AlignmentParams)
-      if !isnothing(x_offset) x_offset[i]  = ele.x_offset end
-      if !isnothing(y_offset) y_offset[i] = ele.y_offset end
-      if !isnothing(x_rot) x_rot[i] = ele.x_rot end
-      if !isnothing(y_rot) y_rot[i] = ele.y_rot end
-      if !isnothing(tilt) tilt[i] = ele.tilt end
-    end
-  end
-  
-  bitsline = BitsBeamline(
-    !isnothing(tracking_method) ? SA[tracking_method...] : nothing,
-    !isnothing(tracking_method_extras) ? SA[tracking_method_extras...] : nothing,
-    !isnothing(repeat_next_n_eles) ? SA[repeat_next_n_eles...] : nothing,
-    !isnothing(n_repeat) ? SA[n_repeat...] : nothing,
-    !isnothing(L) ? SA[L...] : nothing,
-    !isnothing(order) ? SA[order...] : nothing,
-    !isnothing(strength) ? SA[strength...] : nothing,
-    !isnothing(tiltm) ? SA[tiltm...] : nothing,
-    !isnothing(g) ? SA[g...] : nothing,
-    !isnothing(e1) ? SA[e1...] : nothing,
-    !isnothing(e2) ? SA[e2...] : nothing,
-    !isnothing(x_offset) ? SA[x_offset...] : nothing,
-    !isnothing(y_offset) ? SA[y_offset...] : nothing,
-    !isnothing(x_rot) ? SA[x_rot...] : nothing,
-    !isnothing(y_rot) ? SA[y_rot...] : nothing,
-    !isnothing(tilt) ? SA[tilt...] : nothing,
-  )
-  typeof(bitsline) == BBL || error("Something bad happened!")
-  #=if sizeof(bitsline) > 65536
-    @warn "This BitsBeamline is size $(sizeof(bitsline)), which is greater than the 65536 bytes allowed in constant memory on a CUDA GPU. Consider using Float32/Float16 for LineElement parameters, simplifying the beamline, or splitting it up into one size that fits in constant memory and the rest in global memory."
-  end=#
-  return bitsline
-end
 
 #= StaticArrays implementation:
 function tobits(bl::Beamline, ::Type{BBL}=bitsbltype(bl)) where {BBL}
