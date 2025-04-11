@@ -5,7 +5,7 @@ struct Linear end
 function __init__()
   Beamlines.TRACKING_METHOD_MAP[Linear] = 0x1
 end
-Beamlines.tracking_method_extras(::Linear) = SA[]
+Beamlines.get_tracking_method_extras(::Linear) = SA[]
 =# 
 # The extras are a StaticArray of the extra numbers
 # More complicated example:
@@ -19,14 +19,14 @@ function __init__()
   Beamlines.TRACKING_METHOD_MAP[MatrixKick16] = 0x3
   Beamlines.TRACKING_METHOD_MAP[MatrixKick32] = 0x4
 end
-Beamlines.tracking_method_extras(m::MatrixKick) = SA[m.n_steps]
+Beamlines.get_tracking_method_extras(m::MatrixKick) = SA[m.n_steps]
 
 # another option with auto step size computation per element
 struct MatrixKickAuto end
 function __init__()
   Beamlines.TRACKING_METHOD_MAP[MatrixKickAuto] = 0x5
 end
-Beamlines.tracking_method_extras(::MatrixKickAuto) = SA[] # no extras, which is good
+Beamlines.get_tracking_method_extras(::MatrixKickAuto) = SA[] # no extras, which is good
 
 =# 
 
@@ -35,7 +35,7 @@ Beamlines.tracking_method_extras(::MatrixKickAuto) = SA[] # no extras, which is 
 # by get_promoted_tm_extras. This is the requirement for tracking methods. 
 # note that the size in bytes of the extras should be minimized, ideally 0
 # we need to fit this whole lattice in constant memory on a GPU.
-tracking_method_extras(::Any) = error("Please implement Beamlines.tracking_method_extras for this tracking method.")
+get_tracking_method_extras(::Any) = error("Please implement Beamlines.get_tracking_method_extras for this tracking method.")
 
 
 struct BitsLineElement{TME<:SVector,S,BM,BP,AP}
@@ -59,7 +59,7 @@ function tobits(bl::Beamline, ::Type{BLE}=bitseltype(bl)) where {BLE}
 end
 
 function get_promoted_tm_extras(::Type{TME}, tracking_method) where {TME}
-  tme = tracking_method_extras(tracking_method) # implemented by tracking method
+  tme = get_tracking_method_extras(tracking_method) # implemented by tracking method
   if length(tme) > length(TME) || promote_type(eltype(TME),eltype(tme)) != eltype(TME)
     error("Cannot promote tracking method extra $tme to $TME")
   end
