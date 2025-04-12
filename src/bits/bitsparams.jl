@@ -1,17 +1,10 @@
 #=
 
-Contains routines to convert a LineElement to an isbits, 
-regular format based on the passed Beamline. This does not 
-have the same flexibility nor functionality as a regular 
-LineElement, but can be used for fast tracking e.g. on a GPU.
-
-On a CPU, especially during optimization, regular LineElement 
-will almost certainly be faster, because the BitsLineElement
-requires ALL elements to have the exact same types and structure,
-so if only quad strength is a TPSA, then all quad strengths must 
-be a TPSA.
+Defines the parameters for the BitsLineElementView 
+type.
 
 =#
+
 abstract type AbstractBitsParams end
 
 #Base.convert(::Type{T}, p::Union{AbstractParams,Nothing}) where {T <: AbstractBitsParams} = T(p)
@@ -21,7 +14,7 @@ abstract type AbstractBitsParams end
 struct BitsBMultipole{T<:Number}
   strength::T      
   tilt::T          
-  # order::Int       # tobits conversion only stores order as key in the BitsBMultipoleDict
+  order::Int       
   # normalized::Bool # tobits conversion always gives unnormalized
   # integrated::Bool # tobits conversion always gives integrated
 end

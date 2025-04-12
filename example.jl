@@ -9,7 +9,7 @@ d2 = Drift(L=1.0)
 qd = Quadrupole(K1=-qf.K1, L=0.5)
 sd = Sextupole(K2=-sf.K2, L=0.5)
 d3 = Drift(L=0.6)
-b2 = SBend(L=6.0, angle=pi/132)
+b2 = SBend(L=6.0, K0=pi/132/L)
 d4 = Drift(L=1.0)
 
 # We can access quantities like:

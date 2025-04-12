@@ -45,12 +45,22 @@ Drift(; kwargs...)      = LineElement("Drift"; kwargs...)
 Octupole(; kwargs...)   = LineElement("Octupole"; kwargs...)
 Multipole(; kwargs...)  = LineElement("Multipole"; kwargs...)
 Marker(; kwargs...)     = LineElement("Marker"; kwargs...)
-SBend(; kwargs...)      = LineElement("SBend"; kwargs...)
+
+# The bend is special:
+function SBend(; kwargs...)
+  if :K0 in keys(kwargs) && !(:g in keys(kwargs))
+    return LineElement("SBend"; g=kwargs[:K0], kwargs...)
+  elseif !(:K0 in keys(kwargs)) && (:g in keys(kwargs))
+    return LineElement("SBend"; K0=kwargs[:g], kwargs...)
+  else
+    return LineElement("SBend"; kwargs...)
+  end
+end
 
 @kwdef mutable struct UniversalParams <: AbstractParams
   tracking_method = nothing
   L::Number       = 0.0
-  class::String   = "Marker"
+  class::String   = ""
   name::String    = ""
 end
 

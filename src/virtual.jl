@@ -182,15 +182,16 @@ function _set_BM_strength!(ele, b1::BMultipoleParams{S}, key, strength) where {S
 end
 
 function set_bend_angle!(ele::LineElement, ::Symbol, value)
-  up = ele.UniversalParams
-  return @noinline _set_bend_angle!(ele, up, value)
+  L = ele.L
+  return @noinline _set_bend_angle!(ele, L, value)
 end
 
-function _set_bend_angle!(ele, up, value)
-  # Angle = K0*up.L -> K0 = angle/up.L
-  # Currently angle sets both
-  # We should clean this up and find a more consistent definition
-  K0 = value/up.L
+function _set_bend_angle!(ele, L, value)
+  # Angle = K0*L -> K0 = angle/L
+  if L == 0
+    error("Cannot set angle of LineElement with L = 0 (did you specify `angle` before specifying `L`?)")
+  end
+  K0 = value/L
   setproperty!(ele, :K0, K0)
   setproperty!(ele, :g, K0)
   return value

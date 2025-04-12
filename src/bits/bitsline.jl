@@ -1,7 +1,21 @@
+#=
+
+Defines the BitsBeamline type, which is a compressed, 
+immutable, isbits-type structure-of-arrays version of 
+a Beamline.
 
 
+Two routines are defined:
+
+bitsbltype -- Determines the type parameters of the 
+BitsBeamline given a Beamline.
+
+tobits -- Constructs an isbits representation of 
+a Beamline. 
+
+=#
 struct BitsBeamline{T1,T2,T3,T4,T5,T6,T7,T8,T9,T10,T11,T12,T13,T14,T15,T16}
-  tracking_method::T1         # Some array of UInt8
+  tracking_method::T1         # If Nothing, then SciBmadStandard, else some array of UInt8
   tracking_method_extras::T2  
   repeat_next_n_eles::T3
   n_repeat::T4
@@ -25,6 +39,7 @@ end
 function bitsbltype(bl::Beamline, arr::Type{T}=SVector{length(bl.line)}) where {T}
   # Default values:
   # Note these are the ELTYPES of these corresponding fields in BitsBeamline:
+  tracking_method        = Nothing       # SciBmadStandard
   tracking_method_extras = typeof(SA[])
   repeat_next_n_eles     = Nothing
   n_repeat               = Nothing
@@ -44,7 +59,7 @@ function bitsbltype(bl::Beamline, arr::Type{T}=SVector{length(bl.line)}) where {
   for i in 1:length(bl.line)
     ele = bl.line[i]
 
-    ele_tme = Beamlines.get_tracking_method_extras(ele.tracking_method)
+    ele_tme = get_tracking_method_extras(ele.tracking_method)
     if length(ele_tme) > length(tracking_method_extras)
       tracking_method_extras = similar_type(tracking_method_extras, Size(ele_tme))
     end
@@ -122,7 +137,7 @@ function bitsbltype(bl::Beamline, arr::Type{T}=SVector{length(bl.line)}) where {
   end
   make_arr(type) = type == Nothing ? Nothing : arr{type}
   return BitsBeamline{
-    make_arr(UInt8),
+    make_arr(tracking_method),
     make_arr(tracking_method_extras),
     make_arr(repeat_next_n_eles),
     make_arr(n_repeat),
@@ -330,18 +345,8 @@ function tobits(bl::Beamline, ::Type{BBL}=bitsbltype(bl)) where {BBL}
 end
 =#
 
-function get_promoted_tm_extras(::Type{TME}, tracking_method) where {TME}
-  tme = get_tracking_method_extras(tracking_method) # implemented by tracking method
-  if length(tme) > length(TME) || promote_type(eltype(TME),eltype(tme)) != eltype(TME)
-    error("Cannot promote tracking method extra $tme to $TME")
-  end
-  tme_out = zero(TME)
-  for i in 1:length(tme)
-    tme_out = @set tme_out[i] = tme[i]
-  end
-  return tme_out
-end
 
+#=
 function BitsLineElement{TME,S,BM,BP,AP}(ele::LineElement) where {TME,S,BM,BP,AP}
   tracking_method = TRACKING_METHOD_MAP[typeof(ele.tracking_method)]
   tracking_method_extras = get_promoted_tm_extras(TME, ele.tracking_method)::TME
@@ -351,6 +356,7 @@ function BitsLineElement{TME,S,BM,BP,AP}(ele::LineElement) where {TME,S,BM,BP,AP
   alignmentparams = AP == Nothing ? nothing : AP(ele.AlignmentParams)::AP
   return BitsLineElement{TME,S,BM,BP,AP}(tracking_method, tracking_method_extras, L, bmultipoleparams, bendparams, alignmentparams)
 end
+
 
 # First pass to get the BitsLineElement type
 # This should only be done ONCE ever for a beamline, even if updates occur
@@ -412,3 +418,4 @@ function bitseltype(bl::Beamline)
 
   return BitsLineElement{TME,S,BM,BP,AP}
 end
+=#
