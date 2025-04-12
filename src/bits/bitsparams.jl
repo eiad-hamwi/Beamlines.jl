@@ -10,6 +10,15 @@ abstract type AbstractBitsParams end
 #Base.convert(::Type{T}, p::Union{AbstractParams,Nothing}) where {T <: AbstractBitsParams} = T(p)
 
 
+struct BitsUniversalParams{T} <: AbstractBitsParams
+  L::T
+end
+
+Base.eltype(::BitsUniversalParams{T}) where {T} = T
+Base.eltype(::Type{BitsUniversalParams{T}}) where {T} = T
+
+
+
 # BMultipoleParams
 struct BitsBMultipole{T<:Number}
   strength::T      

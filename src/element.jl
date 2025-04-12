@@ -58,7 +58,7 @@ function SBend(; kwargs...)
 end
 
 @kwdef mutable struct UniversalParams <: AbstractParams
-  tracking_method = nothing
+  tracking_method = SciBmadStandard()
   L::Number       = 0.0
   class::String   = ""
   name::String    = ""

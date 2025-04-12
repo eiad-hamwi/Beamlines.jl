@@ -63,6 +63,8 @@ include("alignment.jl")
 include("keymaps.jl")
 include("bits/bitsparams.jl")
 include("bits/bitselement.jl")
+include("bits/bitstracking.jl")
+include("bits/bitsline.jl")
 
 #include("track_aos/track.jl")
 #include("track/track.jl")
