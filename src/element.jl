@@ -8,7 +8,7 @@ Base.setindex!(h::ParamDict, v, key) = error("Incorrect key/value types for Para
 function Base.setindex!(h::ParamDict, v::AbstractParams, key::Type{<:AbstractParams})
   # 208 ns and 3 allocations to check that we set correctly
   # Parameter groups rarely added so perfectly fine
-  typeof(v) <: key || error("Key type $key does not match AbstractParams type $(typeof(v))")
+  typeof(v) <: key || error("Key type $key does not match parameter group type $(typeof(v))")
   # The following is copy-pasted directly from Base dict.jl ==========
   index, sh = Base.ht_keyindex2_shorthash!(h, key)
 
@@ -24,9 +24,33 @@ function Base.setindex!(h::ParamDict, v::AbstractParams, key::Type{<:AbstractPar
   # ==================================================================
 end
 
+# Equality of ParamDict does NOT consider BeamlineParams
+# following is copied from Base abstractdict.jl with modification
+# to ignore BeamlineParams if present
+function Base.:(==)(l::ParamDict, r::ParamDict)
+  L_l = length(l) - (haskey(l, BeamlineParams) ? 1 : 0)
+  L_r = length(r) - (haskey(r, BeamlineParams) ? 1 : 0)
+  L_l != L_r && return false
+  anymissing = false
+  for pair in l
+      if pair[1] == BeamlineParams
+        continue
+      end
+      isin = in(pair, r)
+      if ismissing(isin)
+          anymissing = true
+      elseif !isin
+          return false
+      end
+  end
+  return anymissing ? missing : true
+end
+
 @kwdef struct LineElement
   pdict::ParamDict = ParamDict(UniversalParams => UniversalParams())
 end
+
+Base.:(==)(a::LineElement, b::LineElement) = a.pdict == b.pdict
 
 function LineElement(class::String; kwargs...)
   ele = LineElement()
@@ -62,6 +86,14 @@ end
   L::Number       = 0.0
   class::String   = ""
   name::String    = ""
+end
+
+function Base.:(==)(a::UniversalParams, b::UniversalParams)
+  return a.tracking_method == b.tracking_method &&
+         a.L               == b.L
+         # Only compare things that affect the physics
+         #a.class           == b.class &&
+         #a.name            
 end
 
 # Use Accessors here for default bc super convenient for replacing entire (even mutable) type
@@ -138,4 +170,10 @@ end
 #Base.fieldnames(::Type{LineElement}) = tuple(:pdict, keys(PROPERTIES_MAP)..., keys(PARAMS_MAP)...)
 #Base.fieldnames(::LineElement) = tuple(:pdict, keys(PROPERTIES_MAP)..., keys(PARAMS_MAP)...)
 #Base.propertynames(::Type{LineElement}) = tuple(:pdict, keys(PROPERTIES_MAP)..., keys(PARAMS_MAP)...)
-#Base.propertynames(::LineElement) = tuple(:pdict, keys(PROPERTIES_MAP)..., keys(PARAMS_MAP)...)
+function Base.propertynames(::LineElement)
+  virt = union(keys(VIRTUAL_GETTER_MAP),keys(VIRTUAL_SETTER_MAP))
+  prop = keys(PROPERTIES_MAP)
+  param = keys(PARAMS_MAP)
+  syms = [:pdict, Symbol.(param)..., virt..., prop...]
+  return syms
+end

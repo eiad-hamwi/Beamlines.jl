@@ -10,6 +10,8 @@ end
 Base.eltype(::BendParams{T}) where {T} = T
 Base.eltype(::Type{BendParams{T}}) where {T} = T
 
+Base.:(==)(a::BendParams, b::BendParams) = a.g == b.g && a.e1 == b.e1 && a.e2 == b.e2
+
 # Note that here the reference energy is really needed to compute anything
 # other than the above so there is no more work to do here. Must define 
 # virtual properties for the rest of them.

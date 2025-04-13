@@ -13,6 +13,15 @@ end
 Base.eltype(::BMultipole{T}) where {T} = T
 Base.eltype(::Type{BMultipole{T}}) where {T} = T
 
+function Base.:(==)(a::BMultipole, b::BMultipole)
+  return a.strength   == b.strength &&
+         a.tilt       == b.tilt &&
+         a.order      == b.order &&
+         a.normalized == b.normalized &&
+         a.integrated == b.integrated
+
+end
+
 function Base.hasproperty(bm::BMultipole, key::Symbol)
   if key in fieldnames(BMultipole)
     return true
@@ -226,6 +235,8 @@ Base.eltype(::BMultipoleParams{T}) where {T} = T
 Base.eltype(::Type{BMultipoleParams{T}}) where {T} = T
 
 Base.length(b::BMultipoleParams) = length(b.bdict)
+
+Base.:(==)(a::BMultipoleParams, b::BMultipoleParams) = a.bdict == b.bdict
 
 function Base.hasproperty(b::BMultipoleParams, key::Symbol)
   if key in fieldnames(BMultipoleParams)
