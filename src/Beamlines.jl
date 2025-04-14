@@ -24,7 +24,9 @@ export MattStandard,
        RFCavity,
        Beamline,
        Controller,
-       set!
+       set!,
+       
+       BitsBeamline
 
 using GTPSA, 
       Accessors, 

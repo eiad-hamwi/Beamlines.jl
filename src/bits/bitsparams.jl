@@ -64,7 +64,7 @@ function BitsBMultipole{T}(bm::BMultipole, L, Brho_ref=nothing) where T <: Numbe
   return BitsBMultipole{T}(T(strength), T(bm.tilt))
 end
 =#
-const BitsBMultipoleDict{T,N,normalized} = LittleDict{Int8, BitsBMultipole{T,normalized}, SVector{N,Int8}, SVector{N, BitsBMultipole{T,normalized}}} where {T,N}
+const BitsBMultipoleDict{T,N,normalized} = LittleDict{Int8, BitsBMultipole{T,normalized}, SVector{N,Int8}, SVector{N, BitsBMultipole{T,normalized}}} where {T,N,normalized}
 
 struct BitsBMultipoleParams{T,N,normalized} <: AbstractBitsParams
   bdict::BitsBMultipoleDict{T,N,normalized}

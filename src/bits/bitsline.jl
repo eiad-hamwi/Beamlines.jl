@@ -6,7 +6,6 @@ bytes representation of the lattice.
 =#
 
 struct MultipleTrackingMethods end
-struct MultipleNumberTypes end
 struct Dense end
 struct Sparse end
 
@@ -17,7 +16,6 @@ struct BitsBeamline{
   DS,           # Dense or Sparse representation
   R,            # If there is repeating, then a SVector{N_ele,<:Unsigned Int} specifying how to repeat through them
   N_ele,        # EFFECTIVE number of elements (after applying the repeat optimization)
-  param_eltype, # Equal to MultipleNumberTypes if parameters are of different number types, else the number type of all parameters. Will add an extra byte per parameter if MultipleNumberTypes
   N_bytes,      # Number of bytes per element
   BitsLineElementType # The type of the BitsLineElement representable by each element in the BitsBeamline
 }
@@ -41,8 +39,11 @@ struct BitsLineElement{
   AlignmentParams::AP
 end
 
-function unpack_type_params(::Type{BitsBeamline{TM,TMI,TME,DS,R,N_ele,param_eltype,N_bytes,BitsLineElement{UP,BM,BP,AP}}}) where {TM,TMI,TME,DS,R,N_ele,param_eltype,N_bytes,UP,BM,BP,AP}
-  return TM,TMI,TME,DS,R,N_ele,param_eltype,N_bytes,UP,BM,BP,AP
+function unpack_type_params(::Type{BitsBeamline{TM,TMI,TME,DS,R,N_ele,N_bytes,BitsLineElement{UP,BM,BP,AP}}}) where {TM,TMI,TME,DS,R,N_ele,N_bytes,UP,BM,BP,AP}
+  return TM,TMI,TME,DS,R,N_ele,N_bytes,UP,BM,BP,AP
+end
+function unpack_type_params(::BitsBeamline{TM,TMI,TME,DS,R,N_ele,N_bytes,BitsLineElement{UP,BM,BP,AP}}) where {TM,TMI,TME,DS,R,N_ele,N_bytes,UP,BM,BP,AP}
+  return TM,TMI,TME,DS,R,N_ele,N_bytes,UP,BM,BP,AP
 end
 
 
@@ -50,7 +51,7 @@ function BitsBeamline(
   bl::Beamline, 
   prep...=prep_bitsbl(bl)...
 ) 
-  TM,TMI,TME,DS,R,N_ele,param_eltype,N_bytes,UP,BM,BP,AP = unpack_type_params(prep[1])
+  TM,TMI,TME,DS,R,N_ele,N_bytes,UP,BM,BP,AP = unpack_type_params(prep[1])
   rep = prep[2]
 
   if TM == MultipleTrackingMethods
@@ -64,15 +65,12 @@ function BitsBeamline(
   params = Vector{NTuple{N_bytes,UInt8}}(undef, N_ele)
 
   # Helper function for the set:
-  function setval(i, arr, map::UInt8, t)
+  function setval(i, arr, map::UInt8, T, t)
+    @assert T == promote_type(T,typeof(t))
     @reset arr[i] = map
     i += 1
-    s = sizeof(t)
-    if param_eltype == MultipleNumberTypes
-      @reset arr[i] = UInt8(s)
-      i += 1
-    end
-    @reset arr[i:i+s-1] = reinterpret(NTuple{s,UInt8}, t)
+    s = sizeof(T)
+    @reset arr[i:i+s-1] = reinterpret(NTuple{s,UInt8}, T(t))
     i += s
     return i, arr
   end
@@ -93,14 +91,14 @@ function BitsBeamline(
 
       cur_byte_arr = ntuple(t->0xff, Val{N_bytes}())
   
-      i, cur_byte_arr = setval(i, cur_byte_arr, 0x0, ele.L)
+      i, cur_byte_arr = setval(i, cur_byte_arr, 0x0, eltype(UP), ele.L)
   
       bmp = ele.BMultipoleParams
       if !isnothing(bmp)
         for bm in values(bmp.bdict)
           if bm.tilt != 0
             # 1 -> 22 inclusive is tilt (22 multipole orders including 0)
-            i, cur_byte_arr = setval(i, cur_byte_arr, UInt8(1+bm.order), bm.tilt)
+            i, cur_byte_arr = setval(i, cur_byte_arr, UInt8(1+bm.order), eltype(BM), bm.tilt)
           end
           if bm.strength != 0
             strength = bm.strength
@@ -117,7 +115,7 @@ function BitsBeamline(
               end
             end
             # 23 -> 44 inclusive is order (22 multipole orders including 0)
-            i, cur_byte_arr = setval(i, cur_byte_arr, UInt8(23+bm.order), strength)
+            i, cur_byte_arr = setval(i, cur_byte_arr, UInt8(23+bm.order), eltype(BM), strength)
           end
         end      
       end
@@ -127,7 +125,7 @@ function BitsBeamline(
       if !isnothing(bp)
         for (k,v) in enumerate((bp.g,bp.e1,bp.e2))
           if v != 0 
-            i, cur_byte_arr = setval(i, cur_byte_arr, UInt8(k+44), v)
+            i, cur_byte_arr = setval(i, cur_byte_arr, UInt8(k+44), eltype(BP), v)
           end
         end
       end
@@ -137,7 +135,7 @@ function BitsBeamline(
       if !isnothing(ap)
         for (k,v) in enumerate((ap.x_offset,ap.y_offset,ap.z_offset,ap.x_rot,ap.y_rot,ap.tilt))
           if v != 0 
-            i, cur_byte_arr = setval(i, cur_byte_arr, UInt8(k+47), v)
+            i, cur_byte_arr = setval(i, cur_byte_arr, UInt8(k+47), eltype(AP), v)
           end
         end
       end
@@ -192,7 +190,6 @@ function prep_bitsbl(bl::Beamline; store_normalized::Bool=false) #, arr::Type{T}
   DS = Dense
   R   = Nothing
   N_ele = length(bl.line)
-  param_eltype = Nothing # set by first parameter
   N_bytes = zeros(Int, N_ele)
 
   # These are the types of the structures in BitsLineElement:
@@ -231,12 +228,6 @@ function prep_bitsbl(bl::Beamline; store_normalized::Bool=false) #, arr::Type{T}
 
     # Now onto the parameters
     ele_L = ele.L
-    if param_eltype == Nothing
-      param_eltype = typeof(ele_L)
-    end
-    if param_eltype != typeof(ele_L)
-      param_eltype = MultipleNumberTypes
-    end
     if UP == Nothing
       UP = BitsUniversalParams{typeof(ele_L)}
     else
@@ -261,15 +252,11 @@ function prep_bitsbl(bl::Beamline; store_normalized::Bool=false) #, arr::Type{T}
       end
       # Now check each multipole - we have to do this bc only 
       # unnormalized+integrated is stored in BitsBeamLine, which 
-      # can cause a promotion for param_eltype if Brho_ref doesn't agree
-      # and also a promotion for the eltype of BitsBMultipole
+      # can cause a promotion for the eltype of BitsBMultipole
       for bm in values(bmp.bdict)
         if bm.tilt != 0 # only store tilts when nonzero
           N_bytes[i] += sizeof(eltype(bmp)) 
           N_parameters[i] += 1
-          if param_eltype != eltype(bmp)
-            param_eltype = MultipleNumberTypes
-          end
         end
 
         bits_strength_type = eltype(bmp)
@@ -283,9 +270,6 @@ function prep_bitsbl(bl::Beamline; store_normalized::Bool=false) #, arr::Type{T}
           end
           N_bytes[i] += sizeof(bits_strength_type)
           N_parameters[i] += 1
-          if param_eltype != bits_strength_type
-            param_eltype = MultipleNumberTypes
-          end
           BM = BitsBMultipoleParams{promote_type(eltype(BM),bits_strength_type),length(BM),store_normalized}
         end
       end      
@@ -301,9 +285,6 @@ function prep_bitsbl(bl::Beamline; store_normalized::Bool=false) #, arr::Type{T}
         if v != 0 
           N_bytes[i] += sizeof(v)
           N_parameters[i] += 1
-          if param_eltype != typeof(v)
-            param_eltype = MultipleNumberTypes
-          end
           BP = BitsBendParams{promote_type(eltype(BP),typeof(v))}
         end
       end
@@ -318,9 +299,6 @@ function prep_bitsbl(bl::Beamline; store_normalized::Bool=false) #, arr::Type{T}
         if v != 0 
           N_bytes[i] += sizeof(v)
           N_parameters[i] += 1
-          if param_eltype != typeof(v)
-            param_eltype = MultipleNumberTypes
-          end
           AP = BitsAlignmentParams{promote_type(eltype(AP),typeof(v))}
         end
       end
@@ -341,20 +319,9 @@ function prep_bitsbl(bl::Beamline; store_normalized::Bool=false) #, arr::Type{T}
   bl_N_bytes = maximum(N_bytes)
 
   # Every parameter now needs at least 1 byte to say what it is
-
-  # If this is true, then we need to add a byte next to each
-  # parameter stored in the array specifying how big next number is 
-  # however for certain elements we may already have the space to 
-  # add this number, so we should only add bytes if at least one 
-  # element requires more
-  scl = 1
-  if param_eltype == MultipleNumberTypes
-    scl = 2
-  end
-
   i = 1
   while i < N_ele
-    if bl_N_bytes - N_bytes[i] - scl*N_parameters[i] < 0
+    if bl_N_bytes - N_bytes[i] - N_parameters[i] < 0
       bl_N_bytes += 1
       i -= 1
     end
@@ -388,7 +355,7 @@ function prep_bitsbl(bl::Beamline; store_normalized::Bool=false) #, arr::Type{T}
     DS = Dense
   end
 
-  outtype = BitsBeamline{TM,TMI,TME,DS,R,N_ele,param_eltype,bl_N_bytes,BitsLineElement{UP,BM,BP,AP}}
+  outtype = BitsBeamline{TM,TMI,TME,DS,R,N_ele,bl_N_bytes,BitsLineElement{UP,BM,BP,AP}}
   if sizeof(outtype) > 65536
     @warn "This BitsBeamline is size $(sizeof(outtype)), which is greater than the 65536 bytes allowed in constant memory on a CUDA GPU. Consider combining repeated consecutive elements, using Float32/Float16 for LineElement parameters, simplifying the beamline, or splitting it up into one size that fits in constant memory and the rest in global memory."
   end
