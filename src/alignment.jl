@@ -1,10 +1,10 @@
 @kwdef mutable struct AlignmentParams{T<:Number} <: AbstractParams
-  x_offset::T = 0.0
-  y_offset::T = 0.0
-  z_offset::T = 0.0
-  x_rot::T    = 0.0
-  y_rot::T    = 0.0
-  tilt::T     = 0.0
+  x_offset::T = Float32(0.0)
+  y_offset::T = Float32(0.0)
+  z_offset::T = Float32(0.0)
+  x_rot::T    = Float32(0.0)
+  y_rot::T    = Float32(0.0)
+  tilt::T     = Float32(0.0)
   function AlignmentParams(args...)
     return new{promote_type(typeof.(args)...)}(args...)
   end

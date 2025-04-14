@@ -69,6 +69,8 @@ Drift(; kwargs...)      = LineElement("Drift"; kwargs...)
 Octupole(; kwargs...)   = LineElement("Octupole"; kwargs...)
 Multipole(; kwargs...)  = LineElement("Multipole"; kwargs...)
 Marker(; kwargs...)     = LineElement("Marker"; kwargs...)
+Kicker(; kwargs...)     = LineElement("Kicker"; kwargs...)
+RFCavity(; kwargs...)   = LineElement("RFCavity"; kwargs...)
 
 # The bend is special:
 function SBend(; kwargs...)
@@ -83,7 +85,7 @@ end
 
 @kwdef mutable struct UniversalParams <: AbstractParams
   tracking_method = SciBmadStandard()
-  L::Number       = 0.0
+  L::Number       = Float32(0.0)
   class::String   = ""
   name::String    = ""
 end

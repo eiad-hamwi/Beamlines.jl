@@ -220,7 +220,7 @@ function Base.setindex!(h::BMultipoleDict, v::BMultipole, key::Int)
 end
 
 @kwdef struct BMultipoleParams{T<:Number} <: AbstractParams
-  bdict::BMultipoleDict{T} = BMultipoleDict{Float16}() # multipole coefficients
+  bdict::BMultipoleDict{T} = BMultipoleDict{Float32}() # multipole coefficients
   BMultipoleParams(bdict::BMultipoleDict{T}) where {T} = new{T}(bdict)
   function BMultipoleParams{T}(b::BMultipoleParams) where {T} 
     bdict = BMultipoleDict{T}()
