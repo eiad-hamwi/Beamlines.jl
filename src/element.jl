@@ -46,40 +46,38 @@ function Base.:(==)(l::ParamDict, r::ParamDict)
   return anymissing ? missing : true
 end
 
-@kwdef struct LineElement
-  pdict::ParamDict = ParamDict(UniversalParams => UniversalParams())
+struct LineElement
+  pdict::ParamDict
+  function LineElement(pdict=ParamDict(UniversalParams => UniversalParams()); kwargs...)
+    ele = new(pdict)
+    for (k, v) in kwargs
+      setproperty!(ele, k, v)
+    end
+    return ele
+  end
 end
 
 Base.:(==)(a::LineElement, b::LineElement) = a.pdict == b.pdict
 
-function LineElement(class::String; kwargs...)
-  ele = LineElement()
-  ele.class = class
-  for (k, v) in kwargs
-    setproperty!(ele, k, v)
-  end
-  return ele
-end
-
 # Common class choices
-Solenoid(; kwargs...)   = LineElement("Solenoid"; kwargs...)
-Quadrupole(; kwargs...) = LineElement("Quadrupole"; kwargs...)
-Sextupole(; kwargs...)  = LineElement("Sextupole"; kwargs...)
-Drift(; kwargs...)      = LineElement("Drift"; kwargs...)
-Octupole(; kwargs...)   = LineElement("Octupole"; kwargs...)
-Multipole(; kwargs...)  = LineElement("Multipole"; kwargs...)
-Marker(; kwargs...)     = LineElement("Marker"; kwargs...)
-Kicker(; kwargs...)     = LineElement("Kicker"; kwargs...)
-RFCavity(; kwargs...)   = LineElement("RFCavity"; kwargs...)
+Solenoid(; kwargs...)   = LineElement(; class="Solenoid", kwargs...)
+Quadrupole(; kwargs...) = LineElement(; class="Quadrupole", kwargs...)
+Sextupole(; kwargs...)  = LineElement(; class="Sextupole", kwargs...)
+Drift(; kwargs...)      = LineElement(; class="Drift", kwargs...)
+Octupole(; kwargs...)   = LineElement(; class="Octupole", kwargs...)
+Multipole(; kwargs...)  = LineElement(; class="Multipole", kwargs...)
+Marker(; kwargs...)     = LineElement(; class="Marker", kwargs...)
+Kicker(; kwargs...)     = LineElement(; class="Kicker", kwargs...)
+RFCavity(; kwargs...)   = LineElement(; class="RFCavity", kwargs...)
 
-# The bend is special:
+# The SBend is special:
 function SBend(; kwargs...)
   if :K0 in keys(kwargs) && !(:g in keys(kwargs))
-    return LineElement("SBend"; g=kwargs[:K0], kwargs...)
+    return LineElement(; class="SBend", g=kwargs[:K0], kwargs...)
   elseif !(:K0 in keys(kwargs)) && (:g in keys(kwargs))
-    return LineElement("SBend"; K0=kwargs[:g], kwargs...)
+    return LineElement(; class="SBend", K0=kwargs[:g], kwargs...)
   else
-    return LineElement("SBend"; kwargs...)
+    return LineElement(; class="SBend", kwargs...)
   end
 end
 
@@ -126,7 +124,11 @@ end
 
 function Base.setproperty!(ele::LineElement, key::Symbol, value)
   if haskey(PARAMS_MAP, key) # Setting whole parameter struct
-    setindex!(ele.pdict, value, PARAMS_MAP[key])
+    if isnothing(value) # setting parameter struct to nothing removes it
+      delete!(ele.pdict, PARAMS_MAP[key])
+    else
+      setindex!(ele.pdict, value, PARAMS_MAP[key])
+    end
   elseif haskey(VIRTUAL_SETTER_MAP, key) # Virtual properties override regular properties
     return VIRTUAL_SETTER_MAP[key](ele, key, value)
   elseif haskey(PROPERTIES_MAP, key)

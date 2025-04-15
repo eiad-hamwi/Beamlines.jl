@@ -48,7 +48,8 @@ function BitsLineElement(bbl::BitsBeamline, idx::Integer=1)
       @reset up.L = L
     end
 
-    if params[i] > 0x0 && params[i] < UInt8(45) # then we have some kinda multipole business going on
+    
+    if i <= length(params) && params[i] > 0x0 && params[i] < UInt8(45) # then we have some kinda multipole business going on
       orders::SVector{length(BM),Int8} = bmp.bdict.keys
       bms = bmp.bdict.vals
       id = params[i]
@@ -96,7 +97,7 @@ function BitsLineElement(bbl::BitsBeamline, idx::Integer=1)
       @reset bmp = BM(BitsBMultipoleDict{eltype(BM),length(BM),isnormalized(BM)}(orders, bms))
     end
 
-    if params[i] >= UInt8(45)  && params[i] < UInt8(48) # bendparams!
+    if i <= length(params) && params[i] >= UInt8(45)  && params[i] < UInt8(48) # bendparams!
       id = params[i]
       if isnan(bp.g)
         @reset bp.g = zero(eltype(BP))
@@ -114,7 +115,7 @@ function BitsLineElement(bbl::BitsBeamline, idx::Integer=1)
       end
     end
 
-    if params[i] >= UInt8(48)  && params[i] < UInt8(54) # alignmentparams
+    if i <= length(params) && params[i] >= UInt8(48)  && params[i] < UInt8(54) # alignmentparams
       id = params[i]
       if isnan(ap.x_offset)
         @reset ap.x_offset = zero(eltype(AP))

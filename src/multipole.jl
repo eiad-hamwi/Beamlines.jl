@@ -14,8 +14,8 @@ Base.eltype(::BMultipole{T}) where {T} = T
 Base.eltype(::Type{BMultipole{T}}) where {T} = T
 
 function Base.:(==)(a::BMultipole, b::BMultipole)
-  return a.strength   == b.strength &&
-         a.tilt       == b.tilt &&
+  return a.strength   ≈ b.strength &&
+         a.tilt       ≈ b.tilt &&
          a.order      == b.order &&
          a.normalized == b.normalized &&
          a.integrated == b.integrated

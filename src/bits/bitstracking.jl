@@ -8,6 +8,7 @@ struct SciBmadStandard end
 get_tracking_method_extras(::SciBmadStandard) = SA[]
 
 const TRACKING_METHOD_MAP = Dict{DataType, UInt8}(SciBmadStandard=>0x0)
+#const TRACKING_METHOD_INVERSE_MAP = Dict(value => key for (key, value) in TRACKING_METHOD_MAP)
 
 # A bits-compatible tracking methods should implement:
 #=
@@ -38,6 +39,7 @@ function __init__()
 end
 Beamlines.get_tracking_method_extras(::MatrixKickAuto) = SA[] # no extras, which is good
 
+# you should also be able to create the trackking method instance with TrackingMethod(get_tracking_method_extras(::TrackingMethod)...)
 =# 
 
 # If I have Linear and MatrixKick{T} in the same lattice, then 

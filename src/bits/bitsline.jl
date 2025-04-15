@@ -176,8 +176,11 @@ function BitsBeamline(
     # 6+8 = 14 indeed
 
   end
-
+  if R == Nothing
+    rep = nothing
+  end
   make_arr(t) = isnothing(t) ? nothing : SVector{N_ele,eltype(t)}(t)
+  
   #return make_arr(tracking_method_extras)f
   return (prep[1])(make_arr(tracking_method),make_arr(tracking_method_extras),make_arr(rep),make_arr(params))
 end
@@ -396,7 +399,8 @@ i +3*4 + 1
   repeats = Int[]
   while i <= n
     found = false
-    for eles_per_repeat in 1:floor(Int,(n-i)/2)
+    #println("checking range $(1:floor(Int,(n-i+1)/2))")
+    for eles_per_repeat in 1:floor(Int,(n-i+1)/2)
       cur_pattern = arr[i:i+eles_per_repeat-1]
       count = 1
       #println("Checking pattern $cur_pattern")
@@ -425,4 +429,72 @@ i +3*4 + 1
     end
   end
   return repeats
+end
+
+
+# Convert BitsBeamline back to regular Beamline
+# Compression is lossy - all BMultipoles are converted 
+# to integrated and a uniform choice of normalized/unnormalized
+function Beamline(bbl::BitsBeamline{TM}; Brho_ref=NaN) where {TM}
+
+  if !isnothing(bbl.tracking_method)
+    TRACKING_METHOD_INVERSE_MAP = Dict(value => key for (key, value) in TRACKING_METHOD_MAP)
+  end
+  if isnothing(bbl.rep)
+    bl = Vector{LineElement}(undef, length(bbl.params))
+    for i in 1:length(bbl.params)
+      ble = BitsLineElement(bbl, i)
+      le = LineElement()
+
+      if isnothing(bbl.tracking_method)
+        le.tracking_method = TM
+      else
+        le.tracking_method = TRACKING_METHOD_INVERSE_MAP[bbl.tracking_method[i]](bbl.tracking_method_extras[i]...)
+      end
+
+      le.L = ble.UniversalParams.L
+      le.BMultipoleParams = BMultipoleParams(ble.BMultipoleParams)
+      le.BendParams = BendParams(ble.BendParams)
+      le.AlignmentParams = AlignmentParams(ble.AlignmentParams)
+      bl[i] = le
+    end
+  else
+    bl = Vector{LineElement}(undef, 0)
+    i = 1 
+    while i <= length(bbl.params)
+      repeat_count = bbl.rep[i]
+      start_i = i
+      #println("repeat_count = $repeat_count, start_i=$start_i")
+      for j in 1:repeat_count
+        i = start_i
+        #println("starting again count $j")
+        while true
+          ble = BitsLineElement(bbl, i)
+          le = LineElement()
+
+          if isnothing(bbl.tracking_method)
+            le.tracking_method = TM
+          else
+            le.tracking_method = TRACKING_METHOD_INVERSE_MAP[bbl.tracking_method[i]](bbl.tracking_method_extras[i]...)
+          end
+
+          le.L = ble.UniversalParams.L
+          le.BMultipoleParams = BMultipoleParams(ble.BMultipoleParams)
+          le.BendParams = BendParams(ble.BendParams)
+          le.AlignmentParams = AlignmentParams(ble.AlignmentParams)
+          push!(bl, le)
+
+          i += 1
+          #println("i = $i")
+          if i > length(bbl.rep) || bbl.rep[i] != 0
+            break
+          end
+        end
+      end
+    end
+  end
+
+  return Beamline(bl; Brho_ref=Brho_ref)
+
+
 end
