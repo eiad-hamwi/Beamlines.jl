@@ -139,7 +139,3 @@ c3.dx = dx
 qf.K1
 qd.K1
 ```
-
-## Acknowledgements
-
-`Beamlines.jl` aims to combine the powerful, full-featured accelerator lattice definition in [`AcceleratorLattice.jl`](https://github.com/bmad-sim/AcceleratorLattice.jl) with the fast, polymorphic definition (including extensive use of deferred expressions) in [MAD-NG](https://github.com/MethodicalAcceleratorDesign/MAD-NG/). `Beamlines.jl` is significantly inspired by both of these codes.
