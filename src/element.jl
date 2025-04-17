@@ -1,5 +1,7 @@
 
 abstract type AbstractParams end
+isactive(::AbstractParams) = true
+isactive(::Nothing) = false
 
 # By making the key the AbstractParams type name, we always have a consistent internal definition
 const ParamDict = Dict{Type{<:AbstractParams}, AbstractParams}
@@ -27,7 +29,7 @@ end
 # Equality of ParamDict does NOT consider BeamlineParams
 # following is copied from Base abstractdict.jl with modification
 # to ignore BeamlineParams if present
-function Base.:(==)(l::ParamDict, r::ParamDict)
+function Base.isapprox(l::ParamDict, r::ParamDict)
   L_l = length(l) - (haskey(l, BeamlineParams) ? 1 : 0)
   L_r = length(r) - (haskey(r, BeamlineParams) ? 1 : 0)
   L_l != L_r && return false
@@ -36,7 +38,7 @@ function Base.:(==)(l::ParamDict, r::ParamDict)
       if pair[1] == BeamlineParams
         continue
       end
-      isin = in(pair, r)
+      isin = in(pair, r, ≈)
       if ismissing(isin)
           anymissing = true
       elseif !isin
@@ -57,7 +59,7 @@ struct LineElement
   end
 end
 
-Base.:(==)(a::LineElement, b::LineElement) = a.pdict == b.pdict
+Base.isapprox(a::LineElement, b::LineElement) = a.pdict ≈ b.pdict
 
 # Common class choices
 Solenoid(; kwargs...)   = LineElement(; class="Solenoid", kwargs...)
@@ -88,9 +90,9 @@ end
   name::String    = ""
 end
 
-function Base.:(==)(a::UniversalParams, b::UniversalParams)
+function Base.isapprox(a::UniversalParams, b::UniversalParams)
   return a.tracking_method == b.tracking_method &&
-         a.L               == b.L
+         a.L               ≈  b.L
          # Only compare things that affect the physics
          #a.class           == b.class &&
          #a.name            

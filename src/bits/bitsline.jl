@@ -3,11 +3,15 @@
 Defines the BitsBeamline type: a compressed,
 bytes representation of the lattice.
 
+This is really the most complicated part of 
+the entire Beamlines.jl package. The beamline 
+is compressed into an array of bytes.
+
 =#
 
 struct MultipleTrackingMethods end
 struct Dense end
-struct Sparse end
+struct Sparse end # Sparse is NOT implemented yet but here as a placeholder 
 
 struct BitsBeamline{
   TM,           # Equal to MultipleTrackingMethods if elements use different tracking methods, else equal to universal tracking method
@@ -47,10 +51,10 @@ function unpack_type_params(::BitsBeamline{TM,TMI,TME,DS,R,N_ele,N_bytes,BitsLin
 end
 
 
-function BitsBeamline(
-  bl::Beamline, 
-  prep...=prep_bitsbl(bl)...
-) 
+function BitsBeamline(bl::Beamline; store_normalized=false, prep=nothing)
+  if isnothing(prep)
+    prep = prep_bitsbl(bl, store_normalized)
+  end
   TM,TMI,TME,DS,R,N_ele,N_bytes,UP,BM,BP,AP = unpack_type_params(prep[1])
   rep = prep[2]
 
@@ -185,7 +189,7 @@ function BitsBeamline(
   return (prep[1])(make_arr(tracking_method),make_arr(tracking_method_extras),make_arr(rep),make_arr(params))
 end
 
-function prep_bitsbl(bl::Beamline; store_normalized::Bool=false) #, arr::Type{T}=SVector{length(bl.line)}) where {T}
+function prep_bitsbl(bl::Beamline, store_normalized::Bool=false) #, arr::Type{T}=SVector{length(bl.line)}) where {T}
   # Default values:
   TM  = Nothing # Set by first element, then if any elements differ, set to MultipleTrackingMethods
   TMI = Nothing
@@ -311,7 +315,7 @@ function prep_bitsbl(bl::Beamline; store_normalized::Bool=false) #, arr::Type{T}
     j = 1   
     ele_to_add = ele
     while isassigned(line_w_duplicates, j)
-      if line_w_duplicates[j] == ele
+      if line_w_duplicates[j] ≈ ele
         ele_to_add = line_w_duplicates[j]
         break
       end

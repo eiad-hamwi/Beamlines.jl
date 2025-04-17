@@ -139,17 +139,22 @@ c3.dx = dx
 qf.K1
 qd.K1
 
-# Beamlines.jl also provides functionality to convert the Beamline to a fully isbits type.
-# This may be useful in cases where the Beamline is mostly static and you would like to 
-# put the entire line on a GPU, for example.
-qf = Quadrupole(K1=0.36, L=0.5)
+# Beamlines.jl also provides functionality to convert the Beamline to a
+# compressed, fully isbits type. This may be useful in cases where the 
+# Beamline is mostly static and you would like to put the entire line on 
+# a GPU, for example.
+qf = Quadrupole(K1L=0.18, L=0.5)
 d1 = Drift(L=1.6)
-qd = Quadrupole(K1=-qf.K1, L=0.5)
+qd = Quadrupole(K1L=-qf.K1L, L=0.5)
 d2 = Drift(L=1.6)
 
 bl = Beamline([qf, d1, qd, d2])
-bit_LE_type = Beamlines.bitseltype(bl)
-bitbl = Beamlines.tobits(bl, bit_LE_type) # Vector of BitsLineElement
+bbl = BitsBeamline(bl) # Fully immutable, isbits compressed type
 
-isbitstype(eltype(bitbl)) == true # true
+# A warning will be issued if the size is >64KB (CUDA constant memory)
+sizeof(bbl) 
+
+# Convert back:
+bl2 = Beamline(bbl)
+all(bl.line .≈ bl2.line) # true
 ```

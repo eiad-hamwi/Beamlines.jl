@@ -13,7 +13,7 @@ end
 Base.eltype(::AlignmentParams{T}) where {T} = T
 Base.eltype(::Type{AlignmentParams{T}}) where {T} = T
 
-function Base.:(==)(a::AlignmentParams, b::AlignmentParams)
+function Base.isapprox(a::AlignmentParams, b::AlignmentParams)
   return a.x_offset ≈ b.x_offset &&
          a.y_offset ≈ b.y_offset &&
          a.z_offset ≈ b.z_offset &&
