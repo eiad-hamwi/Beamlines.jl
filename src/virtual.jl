@@ -182,15 +182,16 @@ function _set_BM_strength!(ele, b1::BMultipoleParams{S}, key, strength) where {S
 end
 
 function set_bend_angle!(ele::LineElement, ::Symbol, value)
-  up = ele.UniversalParams
-  return @noinline _set_bend_angle!(ele, up, value)
+  L = ele.L
+  return @noinline _set_bend_angle!(ele, L, value)
 end
 
-function _set_bend_angle!(ele, up, value)
-  # Angle = K0*up.L -> K0 = angle/up.L
-  # Currently angle sets both
-  # We should clean this up and find a more consistent definition
-  K0 = value/up.L
+function _set_bend_angle!(ele, L, value)
+  # Angle = K0*L -> K0 = angle/L
+  if L == 0
+    error("Cannot set angle of LineElement with L = 0 (did you specify `angle` before specifying `L`?)")
+  end
+  K0 = value/L
   setproperty!(ele, :K0, K0)
   setproperty!(ele, :g, K0)
   return value
@@ -202,6 +203,9 @@ function get_BM_independent(ele::LineElement, ::Symbol)
 end
 
 function _get_BM_independent(b)
+  if isnothing(b)
+    return Vector{Symbol}(undef, 0)
+  end
   v = Vector{Symbol}(undef, length(b.bdict))
   i = 1
   for (order, bm) in b.bdict  
@@ -213,9 +217,10 @@ end
 
 function set_BM_independent!(ele::LineElement, ::Symbol, value)
   eltype(value) == Symbol || error("Please provide a list/array/tuple of the multipole properties you want to set as independent variables.")
-  L = ele.L
-  Brho_ref = ele.Brho_ref
   b = ele.BMultipoleParams
+  if isnothing(b)
+    return value
+  end
   for sym in value
     order, normalized, integrated = BMULTIPOLE_STRENGTH_MAP[sym]
     if haskey(b.bdict, order)
@@ -224,18 +229,18 @@ function set_BM_independent!(ele::LineElement, ::Symbol, value)
       strength = oldstrength
       if oldbm.normalized != normalized
         if oldbm.normalized == true
-          strength *= Brho_ref
+          strength *= ele.Brho_ref
         else
-          strength /= Brho_ref
+          strength /= ele.Brho_ref
         end
       end
 
       if oldbm.integrated != integrated
         if oldbm.integrated == true
           L != 0 || error("Unable to set change multipole order $order to have independent variable $sym: element length L = 0")
-          strength /= L
+          strength /= ele.L
         else
-          strength *= L
+          strength *= ele.L
         end
       end
       T = promote_type(typeof(oldstrength),typeof(strength))
@@ -263,6 +268,14 @@ function set_field_master!(ele::LineElement, ::Symbol, value::Bool)
   return set_BM_independent!(ele, :nothing, newsyms)
 end
 
+function set_integrated_master!(ele::LineElement, ::Symbol, value::Bool)
+  BM_independent = _get_BM_independent(ele.BMultipoleParams)
+  c = map(t->BMULTIPOLE_STRENGTH_MAP[t], BM_independent)
+  newsyms = map(t->BMULTIPOLE_STRENGTH_INVERSE_MAP[(t[1],t[2],value)], c)
+
+  return set_BM_independent!(ele, :nothing, newsyms)
+end
+
 function get_field_master(ele::LineElement, ::Symbol)
   b = ele.BMultipoleParams
   return @noinline _get_field_master(b)
@@ -275,6 +288,20 @@ function _get_field_master(b)
     error("Unable to get field_master: BMultipoleParams contains at least one BMultipole with the normalized strength as the independent variable and at least one other BMultipole with the unnormalized strength as the independent variable")
   end
   return !check
+end
+
+function get_integrated_master(ele::LineElement, ::Symbol)
+  b = ele.BMultipoleParams
+  return @noinline _get_integrated_master(b)
+end
+
+function _get_integrated_master(b)
+  bms = values(b.bdict)
+  check = first(bms).integrated
+  if !all(t->t.integrated==check, bms)
+    error("Unable to get integrated_master: BMultipoleParams contains at least one BMultipole with the integrated strength as the independent variable and at least one other BMultipole with the non-integrated strength as the independent variable")
+  end
+  return check
 end
 
 const VIRTUAL_GETTER_MAP = Dict{Symbol,Function}(
@@ -373,6 +400,7 @@ const VIRTUAL_GETTER_MAP = Dict{Symbol,Function}(
 
   :BM_independent => get_BM_independent,
   :field_master => get_field_master,
+  :integrated_master => get_integrated_master,
 )
 
 const VIRTUAL_SETTER_MAP = Dict{Symbol,Function}(
@@ -473,4 +501,5 @@ const VIRTUAL_SETTER_MAP = Dict{Symbol,Function}(
 
   :BM_independent => set_BM_independent!,
   :field_master => set_field_master!,
+  :integrated_master => set_integrated_master!,
 )

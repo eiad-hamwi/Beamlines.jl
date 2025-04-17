@@ -1,5 +1,7 @@
 
 abstract type AbstractParams end
+isactive(::AbstractParams) = true
+isactive(::Nothing) = false
 
 # By making the key the AbstractParams type name, we always have a consistent internal definition
 const ParamDict = Dict{Type{<:AbstractParams}, AbstractParams}
@@ -8,7 +10,7 @@ Base.setindex!(h::ParamDict, v, key) = error("Incorrect key/value types for Para
 function Base.setindex!(h::ParamDict, v::AbstractParams, key::Type{<:AbstractParams})
   # 208 ns and 3 allocations to check that we set correctly
   # Parameter groups rarely added so perfectly fine
-  typeof(v) <: key || error("Key type $key does not match AbstractParams type $(typeof(v))")
+  typeof(v) <: key || error("Key type $key does not match parameter group type $(typeof(v))")
   # The following is copy-pasted directly from Base dict.jl ==========
   index, sh = Base.ht_keyindex2_shorthash!(h, key)
 
@@ -24,34 +26,76 @@ function Base.setindex!(h::ParamDict, v::AbstractParams, key::Type{<:AbstractPar
   # ==================================================================
 end
 
-@kwdef struct LineElement
-  pdict::ParamDict = ParamDict(UniversalParams => UniversalParams())
+# Equality of ParamDict does NOT consider BeamlineParams
+# following is copied from Base abstractdict.jl with modification
+# to ignore BeamlineParams if present
+function Base.isapprox(l::ParamDict, r::ParamDict)
+  L_l = length(l) - (haskey(l, BeamlineParams) ? 1 : 0)
+  L_r = length(r) - (haskey(r, BeamlineParams) ? 1 : 0)
+  L_l != L_r && return false
+  anymissing = false
+  for pair in l
+      if pair[1] == BeamlineParams
+        continue
+      end
+      isin = in(pair, r, ≈)
+      if ismissing(isin)
+          anymissing = true
+      elseif !isin
+          return false
+      end
+  end
+  return anymissing ? missing : true
 end
 
-function LineElement(class::String; kwargs...)
-  ele = LineElement()
-  ele.class = class
-  for (k, v) in kwargs
-    setproperty!(ele, k, v)
+struct LineElement
+  pdict::ParamDict
+  function LineElement(pdict=ParamDict(UniversalParams => UniversalParams()); kwargs...)
+    ele = new(pdict)
+    for (k, v) in kwargs
+      setproperty!(ele, k, v)
+    end
+    return ele
   end
-  return ele
 end
+
+Base.isapprox(a::LineElement, b::LineElement) = a.pdict ≈ b.pdict
 
 # Common class choices
-Solenoid(; kwargs...)   = LineElement("Solenoid"; kwargs...)
-Quadrupole(; kwargs...) = LineElement("Quadrupole"; kwargs...)
-Sextupole(; kwargs...)  = LineElement("Sextupole"; kwargs...)
-Drift(; kwargs...)      = LineElement("Drift"; kwargs...)
-Octupole(; kwargs...)   = LineElement("Octupole"; kwargs...)
-Multipole(; kwargs...)  = LineElement("Multipole"; kwargs...)
-Marker(; kwargs...)     = LineElement("Marker"; kwargs...)
-SBend(; kwargs...)      = LineElement("SBend"; kwargs...)
+Solenoid(; kwargs...)   = LineElement(; class="Solenoid", kwargs...)
+Quadrupole(; kwargs...) = LineElement(; class="Quadrupole", kwargs...)
+Sextupole(; kwargs...)  = LineElement(; class="Sextupole", kwargs...)
+Drift(; kwargs...)      = LineElement(; class="Drift", kwargs...)
+Octupole(; kwargs...)   = LineElement(; class="Octupole", kwargs...)
+Multipole(; kwargs...)  = LineElement(; class="Multipole", kwargs...)
+Marker(; kwargs...)     = LineElement(; class="Marker", kwargs...)
+Kicker(; kwargs...)     = LineElement(; class="Kicker", kwargs...)
+RFCavity(; kwargs...)   = LineElement(; class="RFCavity", kwargs...)
+
+# The SBend is special:
+function SBend(; kwargs...)
+  if :K0 in keys(kwargs) && !(:g in keys(kwargs))
+    return LineElement(; class="SBend", g=kwargs[:K0], kwargs...)
+  elseif !(:K0 in keys(kwargs)) && (:g in keys(kwargs))
+    return LineElement(; class="SBend", K0=kwargs[:g], kwargs...)
+  else
+    return LineElement(; class="SBend", kwargs...)
+  end
+end
 
 @kwdef mutable struct UniversalParams <: AbstractParams
-  tracking_method = nothing
-  L::Number       = 0.0
-  class::String   = "Marker"
+  tracking_method = SciBmadStandard()
+  L::Number       = Float32(0.0)
+  class::String   = ""
   name::String    = ""
+end
+
+function Base.isapprox(a::UniversalParams, b::UniversalParams)
+  return a.tracking_method == b.tracking_method &&
+         a.L               ≈  b.L
+         # Only compare things that affect the physics
+         #a.class           == b.class &&
+         #a.name            
 end
 
 # Use Accessors here for default bc super convenient for replacing entire (even mutable) type
@@ -82,7 +126,11 @@ end
 
 function Base.setproperty!(ele::LineElement, key::Symbol, value)
   if haskey(PARAMS_MAP, key) # Setting whole parameter struct
-    setindex!(ele.pdict, value, PARAMS_MAP[key])
+    if isnothing(value) # setting parameter struct to nothing removes it
+      delete!(ele.pdict, PARAMS_MAP[key])
+    else
+      setindex!(ele.pdict, value, PARAMS_MAP[key])
+    end
   elseif haskey(VIRTUAL_SETTER_MAP, key) # Virtual properties override regular properties
     return VIRTUAL_SETTER_MAP[key](ele, key, value)
   elseif haskey(PROPERTIES_MAP, key)
@@ -128,4 +176,10 @@ end
 #Base.fieldnames(::Type{LineElement}) = tuple(:pdict, keys(PROPERTIES_MAP)..., keys(PARAMS_MAP)...)
 #Base.fieldnames(::LineElement) = tuple(:pdict, keys(PROPERTIES_MAP)..., keys(PARAMS_MAP)...)
 #Base.propertynames(::Type{LineElement}) = tuple(:pdict, keys(PROPERTIES_MAP)..., keys(PARAMS_MAP)...)
-#Base.propertynames(::LineElement) = tuple(:pdict, keys(PROPERTIES_MAP)..., keys(PARAMS_MAP)...)
+function Base.propertynames(::LineElement)
+  virt = union(keys(VIRTUAL_GETTER_MAP),keys(VIRTUAL_SETTER_MAP))
+  prop = keys(PROPERTIES_MAP)
+  param = keys(PARAMS_MAP)
+  syms = [:pdict, Symbol.(param)..., virt..., prop...]
+  return syms
+end

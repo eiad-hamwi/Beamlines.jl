@@ -10,6 +10,18 @@ mutable struct BMultipole{T<:Number}
   BMultipole{T}(args...) where {T} = new{T}(args...)
 end
 
+Base.eltype(::BMultipole{T}) where {T} = T
+Base.eltype(::Type{BMultipole{T}}) where {T} = T
+
+function Base.isapprox(a::BMultipole, b::BMultipole)
+  return a.strength   ≈ b.strength &&
+         a.tilt       ≈ b.tilt &&
+         a.order      == b.order &&
+         a.normalized == b.normalized &&
+         a.integrated == b.integrated
+
+end
+
 function Base.hasproperty(bm::BMultipole, key::Symbol)
   if key in fieldnames(BMultipole)
     return true
@@ -207,8 +219,24 @@ function Base.setindex!(h::BMultipoleDict, v::BMultipole, key::Int)
   # ==================================================================
 end
 
+function Base.isapprox(l::BMultipoleDict, r::BMultipoleDict)
+  L_l = length(l)
+  L_r = length(r)
+  L_l != L_r && return false
+  anymissing = false
+  for pair in l
+      isin = in(pair, r, ≈)
+      if ismissing(isin)
+          anymissing = true
+      elseif !isin
+          return false
+      end
+  end
+  return anymissing ? missing : true
+end
+
 @kwdef struct BMultipoleParams{T<:Number} <: AbstractParams
-  bdict::BMultipoleDict{T} = BMultipoleDict{Float64}() # multipole coefficients
+  bdict::BMultipoleDict{T} = BMultipoleDict{Float32}() # multipole coefficients
   BMultipoleParams(bdict::BMultipoleDict{T}) where {T} = new{T}(bdict)
   function BMultipoleParams{T}(b::BMultipoleParams) where {T} 
     bdict = BMultipoleDict{T}()
@@ -220,6 +248,11 @@ end
 end
 
 Base.eltype(::BMultipoleParams{T}) where {T} = T
+Base.eltype(::Type{BMultipoleParams{T}}) where {T} = T
+
+Base.length(b::BMultipoleParams) = length(b.bdict)
+
+Base.isapprox(a::BMultipoleParams, b::BMultipoleParams) = a.bdict ≈ b.bdict
 
 function Base.hasproperty(b::BMultipoleParams, key::Symbol)
   if key in fieldnames(BMultipoleParams)
