@@ -12,7 +12,7 @@ StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
 Accessors = "0.1.42"
-GTPSA = "1.4.1"
+GTPSA = "1.4.2"
 OrderedCollections = "1.8.0"
 StaticArrays = "1.9.13"
 julia = "1.10"
