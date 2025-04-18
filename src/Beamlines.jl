@@ -24,7 +24,9 @@ export MattStandard,
        Controller,
        set!,
        
-       BitsBeamline
+       BitsBeamline,
+
+       SciBmadStandard
 
 using GTPSA, 
       Accessors, 

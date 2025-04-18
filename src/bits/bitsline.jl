@@ -42,6 +42,13 @@ struct BitsLineElement{
   BendParams::BP
   AlignmentParams::AP
 end
+function Base.getproperty(ble::BitsLineElement, key::Symbol)
+  if key == :L
+    return ble.UniversalParams.L
+  else
+    return getfield(ble, key)
+  end
+end
 
 function unpack_type_params(::Type{BitsBeamline{TM,TMI,TME,DS,R,N_ele,N_bytes,BitsLineElement{UP,BM,BP,AP}}}) where {TM,TMI,TME,DS,R,N_ele,N_bytes,UP,BM,BP,AP}
   return TM,TMI,TME,DS,R,N_ele,N_bytes,UP,BM,BP,AP
