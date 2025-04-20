@@ -1,6 +1,7 @@
 # Beamlines
 
 [![Build Status](https://github.com/mattsignorelli/Beamlines.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/mattsignorelli/Beamlines.jl/actions/workflows/CI.yml?query=branch%3Amain)
+[![codecov](https://codecov.io/github/bmad-sim/Beamlines.jl/graph/badge.svg?token=4776DOLQ8B)](https://codecov.io/github/bmad-sim/Beamlines.jl)
 
 This package defines the `Beamline` and `LineElement` types, which can be used to define particle (or in the future, potentially x-ray) beamlines. The `LineElement` is fully extensible and polymorphic, and has been highly optimized for fast getting/setting of the beamline element parameters. High-order automatic differentiation of parameters, e.g. magnet strengths or lengths, is easy using `Beamlines.jl`. Furthermore, all non-fundamental quantities computed from `LineElement`s are "deferred expressions" in that they are computed only when you need them, and on the fly. There is no "bookkeeper". This both fully minimizes overhead from storing and computing quantities you don't need (especially impactful in optimization loops), and ensures that you don't need to rely on a bookkeeper to properly update all dependent variables, minimizing bugs and easing long term maintainence.
 
