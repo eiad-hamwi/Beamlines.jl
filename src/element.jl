@@ -83,6 +83,9 @@ function SBend(; kwargs...)
   end
 end
 
+# Default tracking method:
+struct SciBmadStandard end
+
 @kwdef mutable struct UniversalParams <: AbstractParams
   tracking_method = SciBmadStandard()
   L::Number       = Float32(0.0)

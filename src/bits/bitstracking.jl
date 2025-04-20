@@ -4,7 +4,6 @@ A generic interface for tracking routines to satisfy in
 order to have compatibility with the BitsBeamline.
 
 =#
-struct SciBmadStandard end
 get_tracking_method_extras(::SciBmadStandard) = SA[]
 
 const TRACKING_METHOD_MAP = Dict{DataType, UInt8}(SciBmadStandard=>0x0)

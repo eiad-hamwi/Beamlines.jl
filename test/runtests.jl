@@ -36,6 +36,8 @@ using Test
     e1 = 0.123
     e2 = 0.456
 
+    @test_throws ErrorException ele.pdict[BendParams] = UniversalParams()
+
     @test !isactive(ele.BendParams)
     ele.g = g
     @test isactive(ele.BendParams)
@@ -49,6 +51,9 @@ using Test
     @test ele.e2 == e2
 
     bp = BendParams(1.0im, 2.0im, 3.0im)
+    @test eltype(bp) == ComplexF64
+    @test eltype(typeof(bp)) == ComplexF64
+    @test bp ≈ BendParams(1.0im, 2.0im, 3.0im)
     ele.BendParams = bp
     @test ele.BendParams === bp
     @test ele.g == 1.0im
@@ -61,6 +66,9 @@ using Test
 
     @test !isactive(ele.AlignmentParams)
     ap = AlignmentParams(1, 2, 3, 4, 5, 6)
+    @test eltype(ap) == Int
+    @test eltype(typeof(ap)) == Int
+    @test ap ≈ AlignmentParams(1, 2, 3, 4, 5, 6)
     ele.AlignmentParams = ap
     @test isactive(ele.AlignmentParams)
     @test ele.AlignmentParams === ap
