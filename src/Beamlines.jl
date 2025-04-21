@@ -23,6 +23,8 @@ export MattStandard,
        Beamline,
        Controller,
        set!,
+
+       deepcopy_no_beamline,
        
        BitsBeamline,
 

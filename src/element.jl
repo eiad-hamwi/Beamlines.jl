@@ -6,6 +6,7 @@ isactive(::Nothing) = false
 # By making the key the AbstractParams type name, we always have a consistent internal definition
 const ParamDict = Dict{Type{<:AbstractParams}, AbstractParams}
 Base.setindex!(h::ParamDict, v, key) = error("Incorrect key/value types for ParamDict")
+Base.setindex!(h::ParamDict, v, key::Type{<:AbstractParams}) = error("Incorrect value for $key: !($v isa $key)")
 
 function Base.setindex!(h::ParamDict, v::AbstractParams, key::Type{<:AbstractParams})
   # 208 ns and 3 allocations to check that we set correctly
@@ -167,7 +168,7 @@ function _setproperty!(pdict::ParamDict, p::AbstractParams, key::Symbol, value)
 end
 
 function deepcopy_no_beamline(ele::LineElement)
-  newele = LineElement(ele.class)
+  newele = LineElement()
   for (key, p) in ele.pdict
     if key != BeamlineParams
       setindex!(newele.pdict, deepcopy(p), key)

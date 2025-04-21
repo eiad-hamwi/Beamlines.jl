@@ -128,17 +128,17 @@ function BitsLineElement(bbl::BitsBeamline, idx::Integer=1)
 
       i, v = readval(i, params, eltype(AP))
       if id == UInt8(48)
-        @reset p.x_offset = v
+        @reset ap.x_offset = v
       elseif id == UInt8(49)
-        @reset p.y_offset = v
+        @reset ap.y_offset = v
       elseif id == UInt8(50)
-        @reset p.z_offset = v
+        @reset ap.z_offset = v
       elseif id == UInt8(51)
-        @reset p.x_rot = v
+        @reset ap.x_rot = v
       elseif id == UInt8(52)
-        @reset p.y_rot = v
+        @reset ap.y_rot = v
       else
-        @reset p.tilt = v
+        @reset ap.tilt = v
       end
     end
   end
