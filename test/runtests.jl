@@ -186,6 +186,9 @@ using Test
     @test a.K1 == 2.0f0/5.0
     @test a.K1L == 0.5f0*2.0f0/5.0
     @test a.Brho_ref == 5.0
+    a.Brho_ref = 6.0
+    @test a.Brho_ref == 6.0
+    a.Brho_ref = 5.0
     @test eltype(a.BMultipoleParams) == Float32
     a.K1 = 123 # should cause promotion
     @test eltype(a.BMultipoleParams) == Float64
@@ -194,6 +197,40 @@ using Test
     @test a.B1L == 0.5*123*5.0
     @test !a.BMultipoleParams.bdict[2].integrated
     @test !a.BMultipoleParams.bdict[2].normalized
+    # Sets:
+    a.K1 = 0.5
+    @test a.K1 ≈ 0.5
+    a.K1L = 0.5
+    @test a.K1L ≈ 0.5
+    a.B1L = 0.5
+    @test a.B1L ≈ 0.5
+
+    a.K2 = 1.2
+    @test a.K2 ≈ 1.2
+    a.K2L = 1.2
+    @test a.K2L ≈ 1.2
+    a.B2L = 1.2
+    @test a.B2L ≈ 1.2
+    a.B2 = 1.2
+    @test a.B2 ≈ 1.2
+
+    a.B3L = 5.6
+    @test a.B3L ≈ 5.6
+    a.B3 = 5.6
+    @test a.B3 ≈ 5.6
+    a.K3L = 5.6
+    @test a.K3L ≈ 5.6
+    a.K3 = 5.6
+    @test a.K3 ≈ 5.6
+
+    a.K4L = 7.8
+    @test a.K4L ≈ 7.8
+    a.K4 = 7.8
+    @test a.K4 ≈ 7.8
+    a.B4L = 7.8
+    @test a.B4L ≈ 7.8
+    a.B4 = 7.8
+    @test a.B4 ≈ 7.8
 
     ele.BMultipoleParams = nothing
     ele.Bs = 1.0
@@ -229,6 +266,7 @@ using Test
 
     ele.K4 = 5.0
     ele.field_master = true
+    @test ele.field_master == true
     BM_indep3 = ele.BM_independent
     @test length(BM_indep3) == 5
     @test :BsL in BM_indep3
@@ -244,6 +282,7 @@ using Test
     @test ele.K4 == 5.0
 
     ele.field_master = false   
+    @test ele.field_master == false
     BM_indep4 = ele.BM_independent
     @test length(BM_indep4) == 5
     @test :KsL in BM_indep4
@@ -267,6 +306,7 @@ using Test
     @test ele.K4 == 5.0
 
     ele.integrated_master = true
+    @test ele.integrated_master == true
     BM_indep5 = ele.BM_independent
     @test length(BM_indep5) == 5
     @test :KsL in BM_indep5
@@ -281,6 +321,7 @@ using Test
     @test ele.K4 == 5.0
 
     ele.integrated_master = false
+    @test ele.integrated_master == false
     BM_indep6 = ele.BM_independent
     @test length(BM_indep6) == 5
     @test :Ks in BM_indep6
@@ -293,6 +334,7 @@ using Test
     @test ele.K2 == 3.0
     @test ele.K3L == 4.0
     @test ele.K4 == 5.0
+
 
     # BitsBeamline
     foreach(t->t.integrated_master=true, bl.line)
@@ -389,4 +431,10 @@ using Test
     set!(c2)
     @test a.K1 == 4
     @test ele.L == 6
+
+    @test c.vars == (; K1 = 4, L = 6)
+
+    # check s computation
+    @test ele.s == a.L
+    @test ele.s_downstream == a.L + ele.L
 end
