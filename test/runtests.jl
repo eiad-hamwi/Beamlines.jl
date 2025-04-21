@@ -435,6 +435,8 @@ using Test
     @test c.vars == (; K1 = 4, L = 6)
 
     # check s computation
+    @test a.s == 0
+    @test a.s_downstream == a.L
     @test ele.s == a.L
     @test ele.s_downstream == a.L + ele.L
 end
