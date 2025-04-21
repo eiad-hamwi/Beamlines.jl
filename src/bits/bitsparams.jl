@@ -129,7 +129,7 @@ Base.eltype(::Type{BitsAlignmentParams{T}}) where {T} = T
 isactive(bap::BitsAlignmentParams) = !isnan(bap.x_offset)
 
 function BitsAlignmentParams{T}() where T <: Number
-  return BitsAlignmentParams{T}(T(NaN), T(NaN), T(NaN), T(NaN), T(NaN))
+  return BitsAlignmentParams{T}(T(NaN), T(NaN), T(NaN), T(NaN), T(NaN), T(NaN))
 end
 
 function AlignmentParams(bap::Union{Nothing,BitsAlignmentParams})

@@ -334,7 +334,7 @@ function prep_bitsbl(bl::Beamline, store_normalized::Bool=false) #, arr::Type{T}
 
   # Every parameter now needs at least 1 byte to say what it is
   i = 1
-  while i < N_ele
+  while i <= N_ele
     if bl_N_bytes - N_bytes[i] - N_parameters[i] < 0
       bl_N_bytes += 1
       i -= 1
@@ -460,7 +460,9 @@ function Beamline(bbl::BitsBeamline{TM}; Brho_ref=NaN) where {TM}
       if isnothing(bbl.tracking_method)
         le.tracking_method = TM
       else
-        le.tracking_method = TRACKING_METHOD_INVERSE_MAP[bbl.tracking_method[i]](bbl.tracking_method_extras[i]...)
+        tm_type = TRACKING_METHOD_INVERSE_MAP[bbl.tracking_method[i]]
+        tme_length = length(first(Base.return_types(get_tracking_method_extras, (tm_type,))))
+        le.tracking_method = tm_type(bbl.tracking_method_extras[i][1:tme_length]...)
       end
 
       le.L = ble.UniversalParams.L
@@ -486,7 +488,9 @@ function Beamline(bbl::BitsBeamline{TM}; Brho_ref=NaN) where {TM}
           if isnothing(bbl.tracking_method)
             le.tracking_method = TM
           else
-            le.tracking_method = TRACKING_METHOD_INVERSE_MAP[bbl.tracking_method[i]](bbl.tracking_method_extras[i]...)
+            tm_type = TRACKING_METHOD_INVERSE_MAP[bbl.tracking_method[i]]
+            tme_length = length(first(Base.return_types(get_tracking_method_extras, (tm_type,))))
+            le.tracking_method = tm_type(bbl.tracking_method_extras[i][1:tme_length]...)
           end
 
           le.L = ble.UniversalParams.L

@@ -320,10 +320,10 @@ function replace(b1::BMultipoleParams{S}, key::Symbol, value) where {S}
   elseif haskey(BMULTIPOLE_TILT_MAP, key)
     # tilt is first value of this multipole being set
     # This is kind of weird, but we can allow it.
-    # default normalized to true, and integrated to false
+    # default normalized to false, and integrated to true 
     ord = BMULTIPOLE_TILT_MAP[key]
-    normalized = true
-    integrated = false
+    normalized = false
+    integrated = true
   else
     error("Unreachable! Replace should only be called when the strength or tilt of a BMultipole is being set such that the number type must be promoted. Please submit an issue to Beamlines.jl")
   end

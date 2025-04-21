@@ -44,6 +44,13 @@ function _get_BM_strength(ele, b, key)
       end
     end
   else
+    if !isactive(ele.BeamlineParams)
+      if bm.normalized == true
+        error("Unable to get $key of LineElement: Normalized multipole is stored, but the element is not within a Beamline with a set Brho_ref")
+      else
+        error("Unable to get $key of LineElement: Unnormalized multipole is stored, but the element is not within a Beamline with a set Brho_ref")
+      end
+    end
     Brho_ref = ele.Brho_ref
     if bm.integrated == integrated
       if bm.normalized == false
@@ -237,7 +244,7 @@ function set_BM_independent!(ele::LineElement, ::Symbol, value)
 
       if oldbm.integrated != integrated
         if oldbm.integrated == true
-          L != 0 || error("Unable to set change multipole order $order to have independent variable $sym: element length L = 0")
+          ele.L != 0 || error("Unable to set change multipole order $order to have independent variable $sym: element length L = 0")
           strength /= ele.L
         else
           strength *= ele.L
