@@ -71,6 +71,8 @@ Octupole(; kwargs...)   = LineElement(; class="Octupole", kwargs...)
 Multipole(; kwargs...)  = LineElement(; class="Multipole", kwargs...)
 Marker(; kwargs...)     = LineElement(; class="Marker", kwargs...)
 Kicker(; kwargs...)     = LineElement(; class="Kicker", kwargs...)
+HKicker(; kwargs...)     = LineElement(; class="HKicker", kwargs...)
+VKicker(; kwargs...)     = LineElement(; class="VKicker", kwargs...)
 RFCavity(; kwargs...)   = LineElement(; class="RFCavity", kwargs...)
 
 # The SBend is special:
