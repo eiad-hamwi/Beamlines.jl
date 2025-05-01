@@ -45,6 +45,14 @@ const PROPERTIES_MAP = Dict{Symbol,Type{<:AbstractParams}}(
   :x_rot => AlignmentParams,
   :y_rot => AlignmentParams,
   :tilt => AlignmentParams,
+
+  :ref_t => PatchParams,
+  :ref_x => PatchParams,
+  :ref_y => PatchParams,
+  :ref_z => PatchParams,
+  :ref_x_pitch => PatchParams,
+  :ref_y_pitch => PatchParams,
+  :ref_tilt => PatchParams,
 )
 
 const PARAMS_MAP = Dict{Symbol,Type{<:AbstractParams}}(
@@ -53,6 +61,7 @@ const PARAMS_MAP = Dict{Symbol,Type{<:AbstractParams}}(
   :BeamlineParams => BeamlineParams,
   :BendParams => BendParams,
   :AlignmentParams => AlignmentParams,
+  :PatchParams => PatchParams,
 )
 
 
