@@ -439,4 +439,46 @@ using Test
     @test a.s_downstream == a.L
     @test ele.s == a.L
     @test ele.s_downstream == a.L + ele.L
+
+    @test !isactive(ele.PatchParams)
+    pp = PatchParams(-1.2e-12, 1.23e-4, 0, -2, 0.0012, 5, 6)
+    @test eltype(pp) == Float64
+    @test eltype(typeof(pp)) == Float64
+    @test pp ≈ PatchParams(-1.2e-12, 1.23e-4, 0, -2, 0.0012, 5, 6)
+    ele.PatchParams = pp
+    @test isactive(ele.PatchParams)
+    @test ele.PatchParams === pp
+    @test ele.ref_t == -1.2e-12 
+    @test ele.ref_x == 1.23e-4
+    @test ele.ref_y == 0 
+    @test ele.ref_z == -2
+    @test ele.ref_x_pitch == 0.0012 
+    @test ele.ref_y_pitch == 5
+    @test ele.ref_tilt == 6
+
+    ele.ref_t = 1.0
+    @test ele.ref_t == 1.0
+    @test typeof(ele.ref_t) == Float64
+    @test ele.PatchParams === pp
+
+    ele.ref_x = 1.0im
+    ele.ref_y = 1
+    ele.ref_z = 1
+    ele.ref_x_pitch = 1
+    ele.ref_y_pitch = 1
+    ele.ref_tilt = 1
+    @test ele.ref_x == 1.0im
+    @test ele.ref_y == 1
+    @test ele.ref_z == 1
+    @test ele.ref_x_pitch == 1
+    @test ele.ref_y_pitch == 1
+    @test ele.ref_tilt == 1
+    @test typeof(ele.ref_t) == ComplexF64
+    @test typeof(ele.ref_x) == ComplexF64
+    @test typeof(ele.ref_y) == ComplexF64
+    @test typeof(ele.ref_z) == ComplexF64
+    @test typeof(ele.ref_x_pitch) == ComplexF64
+    @test typeof(ele.ref_y_pitch) == ComplexF64
+    @test typeof(ele.ref_tilt) == ComplexF64
+    @test !(ele.PatchParams === pp)
 end

@@ -1,11 +1,11 @@
 @kwdef mutable struct PatchParams{T<:Number} <: AbstractParams
-  ref_t::T = Float32(0.0)                    # Time offset
-  ref_x::T = Float32(0.0)                    # Local x coord offset
-  ref_y::T = Float32(0.0)                    # Local y coord offset
-  ref_z::T = Float32(0.0)                    # Local z coord offset
-  ref_tilt::T     = Float32(0.0)             # Roll:  rotation around longitudinal
-  ref_y_pitch::T  = Float32(0.0)             # Pitch: rotation around flat radial
+  ref_t::T        = Float32(0.0)             # Time offset
+  ref_x::T        = Float32(0.0)             # Local x coord offset
+  ref_y::T        = Float32(0.0)             # Local y coord offset
+  ref_z::T        = Float32(0.0)             # Local z coord offset
   ref_x_pitch::T  = Float32(0.0)             # Yaw:   rotation around global vertical 
+  ref_y_pitch::T  = Float32(0.0)             # Pitch: rotation around flat radial
+  ref_tilt::T     = Float32(0.0)             # Roll:  rotation around longitudinal
   function PatchParams(args...)
     return new{promote_type(map(x->typeof(x),args)...)}(args...)
   end
