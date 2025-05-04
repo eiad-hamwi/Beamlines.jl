@@ -1,11 +1,11 @@
 @kwdef mutable struct PatchParams{T<:Number} <: AbstractParams
-  ref_t::T        = Float32(0.0)             # Time offset
-  ref_x::T        = Float32(0.0)             # Local x coord offset
-  ref_y::T        = Float32(0.0)             # Local y coord offset
-  ref_z::T        = Float32(0.0)             # Local z coord offset
-  ref_x_pitch::T  = Float32(0.0)             # Yaw:   rotation around global vertical 
-  ref_y_pitch::T  = Float32(0.0)             # Pitch: rotation around flat radial
-  ref_tilt::T     = Float32(0.0)             # Roll:  rotation around longitudinal
+  patch_dt::T        = Float32(0.0)             # Time offset
+  patch_dx::T        = Float32(0.0)             # Local x coord offset
+  patch_dy::T        = Float32(0.0)             # Local y coord offset
+  patch_dz::T        = Float32(0.0)             # Local z coord offset
+  patch_dx_rot::T    = Float32(0.0)             # Pitch: rotation around flat radial
+  patch_dy_rot::T    = Float32(0.0)             # Yaw:   rotation around global vertical
+  patch_dz_rot::T    = Float32(0.0)             # Roll:  rotation around longitudinal
   function PatchParams(args...)
     return new{promote_type(map(x->typeof(x),args)...)}(args...)
   end
@@ -15,16 +15,16 @@ Base.eltype(::PatchParams{T}) where {T} = T
 Base.eltype(::Type{PatchParams{T}}) where {T} = T
 
 function Base.isapprox(a::PatchParams, b::PatchParams)
-  return a.ref_t          ≈ b.ref_t &&
-         a.ref_x          ≈ b.ref_x &&
-         a.ref_y          ≈ b.ref_y &&
-         a.ref_z          ≈ b.ref_z &&
-         a.ref_x_pitch    ≈ b.ref_x_pitch &&
-         a.ref_y_pitch    ≈ b.ref_y_pitch &&
-         a.ref_tilt       ≈ b.ref_tilt
+  return a.patch_dt          ≈ b.patch_dt &&
+         a.patch_dx          ≈ b.patch_dx &&
+         a.patch_dy          ≈ b.patch_dy &&
+         a.patch_dz          ≈ b.patch_dz &&
+         a.patch_dx_rot      ≈ b.patch_dx_rot &&
+         a.patch_dy_rot      ≈ b.patch_dy_rot &&
+         a.patch_dz_rot      ≈ b.patch_dz_rot
 end
 
 # May want to include reference energy changes
 # In the future, would want to include "flexible" patches for global geomtry connections.
 #
-# The rotations are described in Tait-Bryan angles.
+# The rotations are expressed as Tait-Bryan angles.

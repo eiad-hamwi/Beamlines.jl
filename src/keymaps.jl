@@ -46,13 +46,13 @@ const PROPERTIES_MAP = Dict{Symbol,Type{<:AbstractParams}}(
   :y_rot => AlignmentParams,
   :tilt => AlignmentParams,
 
-  :ref_t => PatchParams,
-  :ref_x => PatchParams,
-  :ref_y => PatchParams,
-  :ref_z => PatchParams,
-  :ref_x_pitch => PatchParams,
-  :ref_y_pitch => PatchParams,
-  :ref_tilt => PatchParams,
+  :patch_dt => PatchParams,
+  :patch_dx => PatchParams,
+  :patch_dy => PatchParams,
+  :patch_dz => PatchParams,
+  :patch_dx_rot => PatchParams,
+  :patch_dy_rot => PatchParams,
+  :patch_dz_rot => PatchParams,
 )
 
 const PARAMS_MAP = Dict{Symbol,Type{<:AbstractParams}}(

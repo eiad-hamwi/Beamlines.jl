@@ -448,37 +448,37 @@ using Test
     ele.PatchParams = pp
     @test isactive(ele.PatchParams)
     @test ele.PatchParams === pp
-    @test ele.ref_t == -1.2e-12 
-    @test ele.ref_x == 1.23e-4
-    @test ele.ref_y == 0 
-    @test ele.ref_z == -2
-    @test ele.ref_x_pitch == 0.0012 
-    @test ele.ref_y_pitch == 5
-    @test ele.ref_tilt == 6
+    @test ele.patch_dt == -1.2e-12 
+    @test ele.patch_dx == 1.23e-4
+    @test ele.patch_dy == 0 
+    @test ele.patch_dz == -2
+    @test ele.patch_dx_rot == 0.0012 
+    @test ele.patch_dy_rot == 5
+    @test ele.patch_dz_rot == 6
 
-    ele.ref_t = 1.0
-    @test ele.ref_t == 1.0
-    @test typeof(ele.ref_t) == Float64
+    ele.patch_dt = 1.0
+    @test ele.patch_dt == 1.0
+    @test typeof(ele.patch_dt) == Float64
     @test ele.PatchParams === pp
 
-    ele.ref_x = 1.0im
-    ele.ref_y = 1
-    ele.ref_z = 1
-    ele.ref_x_pitch = 1
-    ele.ref_y_pitch = 1
-    ele.ref_tilt = 1
-    @test ele.ref_x == 1.0im
-    @test ele.ref_y == 1
-    @test ele.ref_z == 1
-    @test ele.ref_x_pitch == 1
-    @test ele.ref_y_pitch == 1
-    @test ele.ref_tilt == 1
-    @test typeof(ele.ref_t) == ComplexF64
-    @test typeof(ele.ref_x) == ComplexF64
-    @test typeof(ele.ref_y) == ComplexF64
-    @test typeof(ele.ref_z) == ComplexF64
-    @test typeof(ele.ref_x_pitch) == ComplexF64
-    @test typeof(ele.ref_y_pitch) == ComplexF64
-    @test typeof(ele.ref_tilt) == ComplexF64
+    ele.patch_dx = 1.0im
+    ele.patch_dy = 1
+    ele.patch_dz = 1
+    ele.patch_dx_rot = 1
+    ele.patch_dy_rot = 1
+    ele.patch_dz_rot = 1
+    @test ele.patch_dx == 1.0im
+    @test ele.patch_dy == 1
+    @test ele.patch_dz == 1
+    @test ele.patch_dx_rot == 1
+    @test ele.patch_dy_rot == 1
+    @test ele.patch_dz_rot == 1
+    @test typeof(ele.patch_dt) == ComplexF64
+    @test typeof(ele.patch_dx) == ComplexF64
+    @test typeof(ele.patch_dy) == ComplexF64
+    @test typeof(ele.patch_dz) == ComplexF64
+    @test typeof(ele.patch_dx_rot) == ComplexF64
+    @test typeof(ele.patch_dy_rot) == ComplexF64
+    @test typeof(ele.patch_dz_rot) == ComplexF64
     @test !(ele.PatchParams === pp)
 end
