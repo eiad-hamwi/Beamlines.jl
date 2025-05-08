@@ -8,6 +8,7 @@ export MattStandard,
        BMultipoleParams, 
        BeamlineParams,
        AlignmentParams,
+       PatchParams,
        BendParams,
        BMultipole,
        Drift,
@@ -24,6 +25,7 @@ export MattStandard,
        RFCavity,
        Beamline,
        Controller,
+       Patch,
        set!,
 
        deepcopy_no_beamline,
@@ -60,6 +62,7 @@ include("virtual.jl")
 include("bend.jl")
 include("control.jl")
 include("alignment.jl")
+include("patch.jl")
 include("keymaps.jl")
 include("bits/bitsparams.jl")
 include("bits/bitstracking.jl")
