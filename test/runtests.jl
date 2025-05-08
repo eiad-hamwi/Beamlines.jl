@@ -448,37 +448,37 @@ using Test
     ele.PatchParams = pp
     @test isactive(ele.PatchParams)
     @test ele.PatchParams === pp
-    @test ele.patch_dt == -1.2e-12 
-    @test ele.patch_dx == 1.23e-4
-    @test ele.patch_dy == 0 
-    @test ele.patch_dz == -2
-    @test ele.patch_dx_rot == 0.0012 
-    @test ele.patch_dy_rot == 5
-    @test ele.patch_dz_rot == 6
+    @test ele.dt == -1.2e-12 
+    @test ele.dx == 1.23e-4
+    @test ele.dy == 0 
+    @test ele.dz == -2
+    @test ele.dx_rot == 0.0012 
+    @test ele.dy_rot == 5
+    @test ele.dz_rot == 6
 
-    ele.patch_dt = 1.0
-    @test ele.patch_dt == 1.0
-    @test typeof(ele.patch_dt) == Float64
+    ele.dt = 1.0
+    @test ele.dt == 1.0
+    @test typeof(ele.dt) == Float64
     @test ele.PatchParams === pp
 
-    ele.patch_dx = 1.0im
-    ele.patch_dy = 1
-    ele.patch_dz = 1
-    ele.patch_dx_rot = 1
-    ele.patch_dy_rot = 1
-    ele.patch_dz_rot = 1
-    @test ele.patch_dx == 1.0im
-    @test ele.patch_dy == 1
-    @test ele.patch_dz == 1
-    @test ele.patch_dx_rot == 1
-    @test ele.patch_dy_rot == 1
-    @test ele.patch_dz_rot == 1
-    @test typeof(ele.patch_dt) == ComplexF64
-    @test typeof(ele.patch_dx) == ComplexF64
-    @test typeof(ele.patch_dy) == ComplexF64
-    @test typeof(ele.patch_dz) == ComplexF64
-    @test typeof(ele.patch_dx_rot) == ComplexF64
-    @test typeof(ele.patch_dy_rot) == ComplexF64
-    @test typeof(ele.patch_dz_rot) == ComplexF64
+    ele.dx = 1.0im
+    ele.dy = 1
+    ele.dz = 1
+    ele.dx_rot = 1
+    ele.dy_rot = 1
+    ele.dz_rot = 1
+    @test ele.dx == 1.0im
+    @test ele.dy == 1
+    @test ele.dz == 1
+    @test ele.dx_rot == 1
+    @test ele.dy_rot == 1
+    @test ele.dz_rot == 1
+    @test typeof(ele.dt) == ComplexF64
+    @test typeof(ele.dx) == ComplexF64
+    @test typeof(ele.dy) == ComplexF64
+    @test typeof(ele.dz) == ComplexF64
+    @test typeof(ele.dx_rot) == ComplexF64
+    @test typeof(ele.dy_rot) == ComplexF64
+    @test typeof(ele.dz_rot) == ComplexF64
     @test !(ele.PatchParams === pp)
 end
