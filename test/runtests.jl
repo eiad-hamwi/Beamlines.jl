@@ -481,4 +481,35 @@ using Test
     @test typeof(ele.dy_rot) == ComplexF64
     @test typeof(ele.dz_rot) == ComplexF64
     @test !(ele.PatchParams === pp)
+
+
+    # Test @ele and @eles macros
+    @ele tester = LineElement(class="SBend", L=3.0, g=0.1)
+    @ele quaddy = Quadrupole(L=0.20, K1=0.11)
+    @test tester.name == "tester"
+    @test quaddy.name == "quaddy"
+
+    @eles begin
+      drift1 = Drift(L=0.5)
+      drift2 = Drift(L=0.75)
+      solenoid1 = Solenoid(L=0.25, Ks=0.1)
+      quadrupole1 = Quadrupole(L=0.15, K1=0.2)
+    end
+    @test drift1.name == "drift1"
+    @test drift2.name == "drift2"
+    @test solenoid1.name == "solenoid1"
+    @test quadrupole1.name == "quadrupole1"
+
+
+    # Test duplicate removal in Beamline
+    bl = Beamline([drift1, drift2, solenoid1, drift1, 
+                   drift1, drift2, solenoid1, quadrupole1], Brho_ref=60.0)
+    @test bl.line[1].name == "drift1"
+    @test bl.line[4].name == "drift1_2"
+    @test bl.line[5].name == "drift1_3"
+    @test bl.line[2].name == "drift2"
+    @test bl.line[6].name == "drift2_2"
+    @test bl.line[3].name == "solenoid1"
+    @test bl.line[7].name == "solenoid1_2"
+    @test bl.line[8].name == "quadrupole1"
 end

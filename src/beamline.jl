@@ -14,9 +14,9 @@
         else
           name = line[i].name
           duplicates[name] = get(duplicates, name, 1) + 1
-          newname = Symbol("$(name)_$(duplicates[name])")
-          @eval @ele $newname = $(deepcopy_no_beamline(line[i]))
-          line[i] = eval(newname)
+          newname = "$(name)_$(duplicates[name])"
+          line[i] = deepcopy_no_beamline(line[i])
+          line[i].name = newname
         end
       end
       
