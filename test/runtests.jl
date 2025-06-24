@@ -481,4 +481,37 @@ using Test
     @test typeof(ele.dy_rot) == ComplexF64
     @test typeof(ele.dz_rot) == ComplexF64
     @test !(ele.PatchParams === pp)
+
+    # @eles
+    @eles qf = Quadrupole(K1=0.36)
+    @test qf.name == "qf"
+    @eles d = Drift()
+    @test d.name == "d"
+    
+    @eles begin
+      qf = Quadrupole(K1=0.36)
+    end
+    @test qf.name == "qf"
+
+    @eles begin
+      d = Drift()
+    end
+    @test d.name == "d"
+
+    @eles begin
+      qf = Quadrupole(K1=0.36)
+      d = Drift()
+    end
+    @test qf.name == "qf"
+    @test d.name == "d"
+
+    @eles begin
+      qf = Quadrupole(K1=0.36)
+      a = 1+qf.K1
+      d = Drift(L=a)
+    end
+    @test qf.name == "qf"
+    @test d.name == "d"
+    @test d.L == 1+0.36
+    @test a == 1+0.36
 end
