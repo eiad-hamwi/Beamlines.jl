@@ -1,4 +1,3 @@
-
 abstract type AbstractParams end
 isactive(::AbstractParams) = true
 isactive(::Nothing) = false
@@ -189,4 +188,26 @@ function Base.propertynames(::LineElement)
   param = keys(PARAMS_MAP)
   syms = [:pdict, Symbol.(param)..., virt..., prop...]
   return syms
+end
+
+macro ele(def)
+    # Handle single definition
+    @assert def.head == :(=) "Expected syntax: @ele name = LineElement(...)"
+    lhs = esc(def.args[1])                # Variable name e.g., qf
+    constructor_call = def.args[2]        # Element type e.g., LineElement(...), Quadrupole(...), etc
+    name_str = string(def.args[1])        # Element name e.g., "qf"
+    @assert constructor_call.head == :call "Expected LineElement call on right-hand side"
+    fn, args... = constructor_call.args
+    # Inject name kwarg only if not already present
+    new_args = any(arg -> arg.args[1] == :name, args) ? args : (args..., Expr(:kw, :name, name_str))
+    new_call = Expr(:call, fn, new_args...)
+    return :($lhs = $new_call)
+end
+
+
+macro eles(block)
+  @assert block.head == :block "@eles must be followed by a block"
+  eles = filter(x -> !(x isa LineNumberNode), block.args)
+  block = Expr(:block, [:(@ele $ele) for ele in eles]...)
+  return esc(block)
 end
