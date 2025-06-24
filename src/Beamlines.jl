@@ -33,12 +33,15 @@ export MattStandard,
        
        BitsBeamline,
 
-       SciBmadStandard
+       SciBmadStandard,
+
+       @eles
 
 using GTPSA, 
       Accessors, 
       StaticArrays, 
-      OrderedCollections
+      OrderedCollections,
+      MacroTools
 
 import GTPSA: sincu, sinhcu
 
@@ -65,6 +68,7 @@ include("control.jl")
 include("alignment.jl")
 include("patch.jl")
 include("keymaps.jl")
+include("macros.jl")
 include("bits/bitsparams.jl")
 include("bits/bitstracking.jl")
 include("bits/bitsline.jl")
