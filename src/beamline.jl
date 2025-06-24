@@ -5,15 +5,18 @@
   # Beamlines can be very long, so realistically only 
   # Base.Vector should be allowed.
   function Beamline(line::Vector{LineElement}; Brho_ref::Number=NaN)
+    duplicates = Dict{String, Int32}()
     bl = new(line, Brho_ref)
     for i in eachindex(line)
       if haskey(line[i].pdict, BeamlineParams)
         if line[i].beamline != bl
           error("Element is already in a beamline")
         else
-          # This can be changed later...
-          error("Duplicate elements not currently allowed in a beamline")
-          #line[i] = deepcopy_no_beamline(line[line[i].beamline_index])
+          name = line[i].name
+          duplicates[name] = get(duplicates, name, 1) + 1
+          newname = Symbol("$(name)_$(duplicates[name])")
+          @eval @ele $newname = $(deepcopy_no_beamline(line[i]))
+          line[i] = eval(newname)
         end
       end
       
