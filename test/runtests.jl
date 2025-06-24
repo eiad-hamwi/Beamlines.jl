@@ -486,8 +486,10 @@ using Test
     # Test @ele and @eles macros
     @ele tester = LineElement(class="SBend", L=3.0, g=0.1)
     @ele quaddy = Quadrupole(L=0.20, K1=0.11)
-    @test tester.name == "tester"
-    @test quaddy.name == "quaddy"
+    @eval @ele quaddy2 = $(deepcopy_no_beamline(quaddy))
+    @test tester.name  == "tester"
+    @test quaddy.name  == "quaddy"
+    @test quaddy2.name == "quaddy2"
 
     @eles begin
       drift1 = Drift(L=0.5)
