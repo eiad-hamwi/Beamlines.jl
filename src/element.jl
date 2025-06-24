@@ -194,14 +194,20 @@ macro ele(def)
     # Handle single definition
     @assert def.head == :(=) "Expected syntax: @ele name = LineElement(...)"
     lhs = esc(def.args[1])                # Variable name e.g., qf
-    constructor_call = def.args[2]        # Element type e.g., LineElement(...), Quadrupole(...), etc
+    constructor = def.args[2]             # Element type e.g., LineElement(...), Quadrupole(...), etc
     name_str = string(def.args[1])        # Element name e.g., "qf"
-    @assert constructor_call.head == :call "Expected LineElement call on right-hand side"
-    fn, args... = constructor_call.args
-    # Inject name kwarg only if not already present
-    new_args = any(arg -> arg.args[1] == :name, args) ? args : (args..., Expr(:kw, :name, name_str))
-    new_call = Expr(:call, fn, new_args...)
-    return :($lhs = $new_call)
+    if constructor isa Expr && constructor.head == :call
+      fn, args... = constructor.args
+      # Inject name kwarg only if not already present
+      has_name_kwarg = any(arg -> isa(arg, Expr) && arg.head == :kw && arg.args[1] == :name, args)
+      new_args = has_name_kwarg ? args : (args..., Expr(:kw, :name, name_str))
+      new_call = Expr(:call, fn, new_args...)
+      return :($lhs = $new_call)
+    end
+    return quote
+        $lhs = $(esc(constructor))
+        setproperty!($lhs, :name, $name_str)
+    end
 end
 
 
