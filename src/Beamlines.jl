@@ -29,7 +29,6 @@ export MattStandard,
        set!,
 
        deepcopy_no_beamline,
-       @ele, @eles, 
        
        BitsBeamline,
 

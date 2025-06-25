@@ -23,7 +23,7 @@
             end
             newname = string(name, unique_name_suffix, duplicates[name])
             line[i] = deepcopy_no_beamline(line[i])
-            Core.eval(Main, :(@ele $(Symbol(newname)) = $(line[i])))
+            Core.eval(Main, :(@eles $(Symbol(newname)) = $(line[i])))
           end
         end
       end
@@ -110,7 +110,7 @@ function register_duplicate_element_global!(ele::LineElement, newname::AbstractS
     setproperty!(ele_named, :name, newname)
 
     # Register in global scope
-    Core.eval(Main, :(@ele $(sym) = $ele_named))
+    Core.eval(Main, :(@eles $(sym) = $ele_named))
 
     return ele_named
 end
