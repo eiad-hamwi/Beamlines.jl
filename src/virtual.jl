@@ -312,9 +312,9 @@ function _get_integrated_master(b)
 end
 
 function get_cavity_frequency(ele::LineElement, key::Symbol)
-  c = ele.CavityParams
+  c = ele.RFParams
   if isnothing(c)
-    error("Unable to get $key of LineElement $(ele.name): No CavityParams present")
+    error("Unable to get $key of LineElement $(ele.name): No RFParams present")
   end
   return @noinline _get_cavity_frequency(c, key)
 end
@@ -325,34 +325,34 @@ function _get_cavity_frequency(c, key)
     return c.frequency
   else
     correctkey = CAVITY_FREQUENCY_INVERSE_MAP[c.harmon_master]
-    error("Cannot calculate $key of CavityParams since particle species is unknown at Beamlines level and harmon_master=$(c.harmon_master)")
+    error("Cannot calculate $key of RFParams since particle species is unknown at Beamlines level and harmon_master=$(c.harmon_master)")
   end
 end
 
 function set_cavity_frequency!(ele::LineElement, key::Symbol, value)
-  if !haskey(ele.pdict, CavityParams)
+  if !haskey(ele.pdict, RFParams)
     harmon_master = CAVITY_FREQUENCY_MAP[key]
-    setindex!(ele.pdict, CavityParams(harmon_master=harmon_master), CavityParams)
+    setindex!(ele.pdict, RFParams(harmon_master=harmon_master), RFParams)
   end
 
-  c = ele.CavityParams
+  c = ele.RFParams
   @noinline _set_cavity_frequency!(ele, c, key, value)
   return value
 end
 
-function _set_cavity_frequency!(ele, c1::CavityParams{S}, key, value) where {S}
+function _set_cavity_frequency!(ele, c1::RFParams{S}, key, value) where {S}
   harmon_master = CAVITY_FREQUENCY_MAP[key]
   
   T = promote_type(S, typeof(value))
   if T != S || c1.harmon_master != harmon_master
-    # Create new CavityParams with updated type and/or harmon_master
-    c = CavityParams(
+    # Create new RFParams with updated type and/or harmon_master
+    c = RFParams(
       harmon_master = harmon_master,
       frequency     = T(value),
       voltage       = T(c1.voltage),
       phi0          = T(c1.phi0)
     )
-    ele.pdict[CavityParams] = c
+    ele.pdict[RFParams] = c
   else
     # Can modify in place
     c1.frequency = T(value)

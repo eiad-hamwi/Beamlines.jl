@@ -141,6 +141,10 @@ function Base.setproperty!(ele::LineElement, key::Symbol, value)
     return VIRTUAL_SETTER_MAP[key](ele, key, value)
   elseif haskey(PROPERTIES_MAP, key)
     if !haskey(ele.pdict, PROPERTIES_MAP[key])
+      # If the parameter struct associated with this symbol does not exist, create it
+      # This could be optimized in the future with a `place` function
+      # That is similar to `replace` but just has the type
+      # Though adding fields is not done very often so is fine
       setindex!(ele.pdict, PROPERTIES_MAP[key](), PROPERTIES_MAP[key])
     end
     p = getindex(ele.pdict, PROPERTIES_MAP[key])
