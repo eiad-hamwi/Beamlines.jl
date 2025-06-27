@@ -1,4 +1,3 @@
-
 abstract type AbstractParams end
 isactive(::AbstractParams) = true
 isactive(::Nothing) = false
@@ -143,10 +142,19 @@ function Base.setproperty!(ele::LineElement, key::Symbol, value)
   elseif haskey(PROPERTIES_MAP, key)
     if !haskey(ele.pdict, PROPERTIES_MAP[key])
       # If the parameter struct associated with this symbol does not exist, create it
-      # This could be optimized in the future with a `place` function
-      # That is similar to `replace` but just has the type
-      # Though adding fields is not done very often so is fine
-      setindex!(ele.pdict, PROPERTIES_MAP[key](), PROPERTIES_MAP[key])
+      # Special case for CavityParams: need to provide harmon_master
+      if PROPERTIES_MAP[key] == CavityParams
+        # For virtual cavity properties, use the correct harmon_master
+        if haskey(CAVITY_FREQUENCY_MAP, key)
+          harmon_master = CAVITY_FREQUENCY_MAP[key]
+          setindex!(ele.pdict, CavityParams(harmon_master=harmon_master), CavityParams)
+        else
+          # For regular CavityParams properties, default to false (frequency in Hz)
+          setindex!(ele.pdict, CavityParams(harmon_master=false), CavityParams)
+        end
+      else
+        setindex!(ele.pdict, PROPERTIES_MAP[key](), PROPERTIES_MAP[key])
+      end
     end
     p = getindex(ele.pdict, PROPERTIES_MAP[key])
     # Function barrier for speed
