@@ -11,7 +11,6 @@ end
 
 Base.eltype(::CavityParams{T}) where {T} = T
 Base.eltype(::Type{CavityParams{T}}) where {T} = T
-isconst(::CavityParams, key::Symbol) = key == :harmon_master
 
 
 function Base.isapprox(a::CavityParams, b::CavityParams) 
