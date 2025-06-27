@@ -516,6 +516,8 @@ using Test
     @test a == 1+0.36
 
     # CavityParams tests
+    @test_throws ErrorException qf.rf_frequency
+
     # Basic RF frequency mode
     cav = RFCavity(frequency=352e6, voltage=1e6, harmon_master=false)
     @test cav.rf_frequency == 352e6 && cav.harmon_master == false
@@ -532,6 +534,7 @@ using Test
     cav2.voltage = 200e6
     @test cav2.CavityParams.rf_frequency == 352e6 && cav2.harmon_master == false
     @test_throws ErrorException cav2.harmonic_number
+    cav2.harmonic_number = 1159
     cav2.harmonic_number = 1160
     @test cav2.harmonic_number == 1160 && cav2.harmon_master == true
   

@@ -51,7 +51,7 @@ function Base.getproperty(c::CavityParams, key::Symbol)
       error("Only $correctkey is currently set in CavityParams, $key cannot be calculated without particle species information")
     end
   end
-  error("CavityParams $c does not have property $key")
+  error("CavityParams does not have property $key")
 end
 
 function Base.setproperty!(c::CavityParams{T}, key::Symbol, value) where {T}
@@ -67,7 +67,7 @@ function Base.setproperty!(c::CavityParams{T}, key::Symbol, value) where {T}
       error("Cannot set $key in CavityParams directly because `harmon_master` = $(c.harmon_master), set $key in element instead")
     end
   end
-  error("CavityParams $c does not have property $key")
+  error("CavityParams does not have property $key")
 end
 
 function _setproperty!(pdict::ParamDict, p::CavityParams, key::Symbol, value)

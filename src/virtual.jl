@@ -314,7 +314,7 @@ end
 function get_cavity_frequency(ele::LineElement, key::Symbol)
   c = ele.CavityParams
   if isnothing(c)
-    error("Unable to get $key of LineElement: No CavityParams present")
+    error("Unable to get $key of LineElement $(ele.name): No CavityParams present")
   end
   return @noinline _get_cavity_frequency(c, key)
 end
