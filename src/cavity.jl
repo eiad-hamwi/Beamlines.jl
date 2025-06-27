@@ -2,7 +2,7 @@
     frequency::T          = Float32(0.0) # RF frequency in Hz or Harmonic number
     voltage::T            = Float32(0.0) # Voltage in V 
     phi0::T               = Float32(0.0) # Phase at reference energy
-    const harmon_master::Bool            # false = frequency in Hz, true = harmonic number
+    const harmon_master::Bool = false    # false = frequency in Hz, true = harmonic number
 
     function CavityParams(args...)
         return new{promote_type(map(x->typeof(x),args)...)}(args...)

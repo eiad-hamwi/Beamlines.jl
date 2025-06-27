@@ -141,14 +141,7 @@ function Base.setproperty!(ele::LineElement, key::Symbol, value)
     return VIRTUAL_SETTER_MAP[key](ele, key, value)
   elseif haskey(PROPERTIES_MAP, key)
     if !haskey(ele.pdict, PROPERTIES_MAP[key])
-      # If the parameter struct associated with this symbol does not exist, create it
-      # Special case for CavityParams: need to provide harmon_master
-      if PROPERTIES_MAP[key] == CavityParams
-        # For regular CavityParams properties, default `harmon_master` to false (frequency in Hz)
-        setindex!(ele.pdict, CavityParams(harmon_master=false), CavityParams)
-      else
-        setindex!(ele.pdict, PROPERTIES_MAP[key](), PROPERTIES_MAP[key])
-      end
+      setindex!(ele.pdict, PROPERTIES_MAP[key](), PROPERTIES_MAP[key])
     end
     p = getindex(ele.pdict, PROPERTIES_MAP[key])
     # Function barrier for speed
