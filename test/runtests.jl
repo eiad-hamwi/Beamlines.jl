@@ -522,14 +522,27 @@ using Test
     @test_throws ErrorException cav.harmonic_number
     cav.rf_frequency = 500e6 + 1e3im
     @test eltype(cav.CavityParams) == ComplexF64
+    @test eltype(typeof(cav.CavityParams)) == ComplexF64
+    cav.CavityParams.rf_frequency = 210.1e6
+    @test_throws ErrorException cav.CavityParams.dx_rot
+    @test_throws ErrorException cav.CavityParams.dx_rot = 1.0
 
     # Harmonic number mode and mode switching
-    cav2 = RFCavity(harmonic_number=1160)
+    cav2 = RFCavity(rf_frequency=352e6)
     cav2.voltage = 200e6
+    @test cav2.CavityParams.rf_frequency == 352e6 && cav2.harmon_master == false
+    @test_throws ErrorException cav2.harmonic_number
+    cav2.harmonic_number = 1160
     @test cav2.harmonic_number == 1160 && cav2.harmon_master == true
-    @test_throws ErrorException cav2.rf_frequency
-    cav2.rf_frequency = 352e6  # Switch modes
-    @test cav2.rf_frequency == 352e6 && cav2.harmon_master == false
+  
+
+    # Type promotion via replace function
+    cp_new = Beamlines.replace(CavityParams(frequency=352f6, voltage = 200f6, harmon_master=false), :harmonic_number, 1160e0)
+    @test cp_new.harmon_master == true && eltype(cp_new) == Float64
+    @test cp_new ≈ cav2.CavityParams
+    @test_throws ErrorException cp_new.harmon_master = false
+    @test_throws ErrorException cp_new.rf_frequency = 210.1e6 
+
 
     # Direct property access and CavityParams struct operations
     cp = CavityParams(frequency=352e6, harmon_master=false)
@@ -537,8 +550,4 @@ using Test
     @test_throws ErrorException cp.harmonic_number
     cav2.CavityParams = cp
     @test cav2.CavityParams === cp
-
-    # Type promotion via replace function
-    cp_new = Beamlines.replace(CavityParams(frequency=352f6, harmon_master=false), :harmonic_number, 1160e0)
-    @test cp_new.harmon_master == true && eltype(cp_new) == Float64
 end

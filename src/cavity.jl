@@ -57,14 +57,14 @@ end
 function Base.setproperty!(c::CavityParams{T}, key::Symbol, value) where {T}
   if key in (:frequency, :voltage, :phi0)
     return setfield!(c, key, T(value))
-  elseif key in fieldnames(CavityParams)
-    return setfield!(c, key, value)
+  elseif key == :harmon_master
+    error("Cannot set `harmon_master` in CavityParams directly, set as element parameter instead")
   elseif haskey(CAVITY_FREQUENCY_MAP, key)
     harmon_master = CAVITY_FREQUENCY_MAP[key]
     if harmon_master == c.harmon_master
       return setfield!(c, :frequency, T(value))
     else
-      error("CavityParams $c does not have property $key")
+      error("Cannot set $key in CavityParams directly because `harmon_master` = $(c.harmon_master), set $key in element instead")
     end
   end
   error("CavityParams $c does not have property $key")
