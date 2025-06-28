@@ -23,7 +23,6 @@
             end
             newname = string(name, unique_name_suffix, duplicates[name])
             line[i] = deepcopy_no_beamline(line[i])
-            Core.eval(Main, :(@eles $(Symbol(newname)) = $(line[i])))
           end
         end
       end
@@ -34,9 +33,7 @@
     if !isnothing(unique_name_suffix)
       for i in originals
               newname = string(line[i].name, unique_name_suffix, 1)
-              Core.eval(Main, :($(Symbol(newname)) = $(getfield(Main, Symbol(line[i].name)))))
               Core.eval(Main, :($(Symbol(line[i].name)) = $(nothing)))
-              Core.eval(Main, :($(Symbol(newname)).name = $(newname)))
       end
     end
     
