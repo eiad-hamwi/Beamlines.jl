@@ -350,7 +350,8 @@ function _set_cavity_frequency!(ele, c1::RFParams{S}, key, value) where {S}
       harmon_master = harmon_master,
       frequency     = T(value),
       voltage       = T(c1.voltage),
-      phi0          = T(c1.phi0)
+      phi0          = T(c1.phi0),
+      L_ring        = T(c1.L_ring) # New field for length of the ring
     )
     ele.pdict[RFParams] = c
   else

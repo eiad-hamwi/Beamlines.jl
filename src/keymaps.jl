@@ -58,6 +58,7 @@ const PROPERTIES_MAP = Dict{Symbol,Type{<:AbstractParams}}(
   :voltage => RFParams,
   :phi0 => RFParams,
   :harmon_master => RFParams,
+  :L_ring => RFParams,
 )
 
 const PARAMS_MAP = Dict{Symbol,Type{<:AbstractParams}}(

@@ -2,6 +2,7 @@
     frequency::T          = Float32(0.0) # RF frequency in Hz or Harmonic number
     voltage::T            = Float32(0.0) # Voltage in V 
     phi0::T               = Float32(0.0) # Phase at reference energy
+    L_ring::T             = Float32(0.0) # Length of the ring in m, used for wave_number calculation
     const harmon_master::Bool = false    # false = frequency in Hz, true = harmonic number
 
     function RFParams(args...)
@@ -55,7 +56,7 @@ function Base.getproperty(c::RFParams, key::Symbol)
 end
 
 function Base.setproperty!(c::RFParams{T}, key::Symbol, value) where {T}
-  if key in (:frequency, :voltage, :phi0)
+  if key in (:frequency, :voltage, :phi0, :L_ring)
     return setfield!(c, key, T(value))
   elseif key == :harmon_master
     error("Cannot set `harmon_master` in RFParams directly, set as element parameter instead")
@@ -91,13 +92,13 @@ function replace(c1::RFParams{S}, key::Symbol, value) where {S}
   if haskey(CAVITY_FREQUENCY_MAP, key)
     harmon_master = CAVITY_FREQUENCY_MAP[key]
     # Create new RFParams with updated harmon_master and frequency using inner constructor
-    return RFParams(T(value), T(c1.voltage), T(c1.phi0), harmon_master)
+    return RFParams(T(value), T(c1.voltage), T(c1.phi0), T(c1.L_ring), harmon_master)
   elseif key == :harmon_master
     # Handle direct harmon_master changes using inner constructor
-    return RFParams(T(c1.frequency), T(c1.voltage), T(c1.phi0), value)
+    return RFParams(T(c1.frequency), T(c1.voltage), T(c1.phi0), T(c1.L_ring), value)
   else
     # Use copy constructor and setproperty! for regular properties
-    c1 = RFParams(T(c1.frequency), T(c1.voltage), T(c1.phi0), c1.harmon_master)
+    c1 = RFParams(T(c1.frequency), T(c1.voltage), T(c1.phi0), T(c1.L_ring), c1.harmon_master)
     setproperty!(c1, key, T(value))
     return c1
   end

@@ -57,9 +57,10 @@ B1L_Q1B_6W =  8.03400000000000034E+001
 #-------------------------------------------------------
 
 IP6D = LineElement(class="Marker",  name = "IP6D");
-PB_SOL_R = LineElement(class="Patch (Unsupported)",  name = "PB_SOL_R");
+PB_SOL_R = LineElement(class="Patch",  dy_rot =  2.5E-002, name = "PB_SOL_R");
 STAR_DETECT_R = Solenoid(L = 2.0, name = "STAR_DETECT_R");
-PE_SOL_R = LineElement(class="Patch (Unsupported)",  name = "PE_SOL_R");
+PE_SOL_R = LineElement(class="Patch", dy_rot = -2.5E-002,
+  dx = -5.00104192714923013E-002, name = "PE_SOL_R");
 O06D_SOL_Q1A = Drift(L = 3.2993748371982, name = "O06D_SOL_Q1A");
 Q1APR = Quadrupole(L = 1.8, K1 = -0.0830555376631274, name = "Q1APR");
 O06D_Q1A_Q1B = Drift(L = 0.5, name = "O06D_Q1A_Q1B");
@@ -1977,49 +1978,53 @@ O_OFF_MOM_IP6_2 = LineElement(class="Instrument", L = 0.4, name = "O_OFF_MOM_IP6
 O06W_FFDET!4 = Drift(L = 1.60200901584312, name = "O06W_FFDET!4");
 O_OFF_MOM_IP6_1 = LineElement(class="Instrument", L = 0.4, name = "O_OFF_MOM_IP6_1");
 O06W_FFDET!5 = Drift(L = 0.230920926540421, name = "O06W_FFDET!5");
-PBR_B1APF = LineElement(class="Patch (Unsupported)",  name = "PBR_B1APF");
-PBT_B1APF = LineElement(class="Patch (Unsupported)",  name = "PBT_B1APF");
-B1APF = SBend(L = 1.5, name = "B1APF");
-PET_B1APF = LineElement(class="Patch (Unsupported)",  name = "PET_B1APF");
-PER_B1APF = LineElement(class="Patch (Unsupported)",  name = "PER_B1APF");
+PBR_B1APF = LineElement(class="Patch", dy_rot =  2.38032985038345996E-002, name = "PBR_B1APF");
+PBT_B1APF = LineElement(class="Patch", dx = -1.53882030013440998E-002, name = "PBT_B1APF");
+B1APF = SBend(L = 1.5, g = 0, K0 = -2.9434339927466801E-03, name = "B1APF");
+PET_B1APF = LineElement(class="Patch", dx = -1.70096429725015014E-002, name = "PET_B1APF");
+PER_B1APF = LineElement(class="Patch", dy_rot = -1.93871142166689991E-002, name = "PER_B1APF");
 O06W_B1_B1A = Drift(L = 0.50168508374684, name = "O06W_B1_B1A");
-PBR_B1PF = LineElement(class="Patch (Unsupported)",  name = "PBR_B1PF");
-PBT_B1PF = LineElement(class="Patch (Unsupported)",  name = "PBT_B1PF");
-B1PF = SBend(L = 3.0, name = "B1PF");
-PET_B1PF = LineElement(class="Patch (Unsupported)",  name = "PET_B1PF");
-PER_B1PF = LineElement(class="Patch (Unsupported)",  name = "PER_B1PF");
+PBR_B1PF = LineElement(class="Patch", dy_rot =  1.25950476108859007E-002,  name = "PBR_B1PF");
+PBT_B1PF = LineElement(class="Patch", dx = -6.26799876724247994E-003, name = "PBT_B1PF");
+B1PF = SBend(L = 3.0, g = 0, K0 = -3.7067050235983514E-03, name = "B1PF");
+PET_B1PF = LineElement(class="Patch", dx = -1.48375342617892998E-002,  name = "PET_B1PF");
+PER_B1PF = LineElement(class="Patch", dy_rot = -1.47507561726256003E-003, name = "PER_B1PF");
 O06W_Q2_B1 = Drift(L = 0.501544459683321, name = "O06W_Q2_B1");
-PBR_Q2PF = LineElement(class="Patch (Unsupported)",  name = "PBR_Q2PF");
-PBT_Q2PF = LineElement(class="Patch (Unsupported)",  name = "PBT_Q2PF");
+PBR_Q2PF = LineElement(class="Patch", dy_rot =  1.54668927288381004E-002, name = "PBR_Q2PF");
+PBT_Q2PF = LineElement(class="Patch", dx = -1.13897121786720994E-002, name = "PBT_Q2PF");
 Q2PF = Quadrupole(L = 3.8, K1 = 0.0376078408315903, name = "Q2PF");
-PET_Q2PF = LineElement(class="Patch (Unsupported)",  name = "PET_Q2PF");
-PER_Q2PF = LineElement(class="Patch (Unsupported)",  name = "PER_Q2PF");
+PET_Q2PF = LineElement(class="Patch", dx = -4.51593211840057990E-002, name = "PET_Q2PF");
+PER_Q2PF = LineElement(class="Patch", dy_rot = -1.29367560655845992E-002, name = "PER_Q2PF");
 O06W_Q1B_Q2 = Drift(L = 0.40102132474581, name = "O06W_Q1B_Q2");
-PBR_Q1BPF = LineElement(class="Patch (Unsupported)",  name = "PBR_Q1BPF");
-PBT_Q1BPF = LineElement(class="Patch (Unsupported)",  name = "PBT_Q1BPF");
+PBR_Q1BPF = LineElement(class="Patch", dy_rot =  1.31828003697268999E-002, name = "PBR_Q1BPF");
+PBT_Q1BPF = LineElement(class="Patch", dx =  4.55987368366134013E-006, name = "PBT_Q1BPF");
 Q1BPF = Quadrupole(L = 1.61, K1 = -0.0524400252820484, name = "Q1BPF");
-PET_Q1BPF = LineElement(class="Patch (Unsupported)",  name = "PET_Q1BPF");
-PER_Q1BPF = LineElement(class="Patch (Unsupported)",  name = "PER_Q1BPF");
+PET_Q1BPF = LineElement(class="Patch", dx = -2.17131032452377998E-002, name = "PET_Q1BPF");
+PER_Q1BPF = LineElement(class="Patch", dy_rot = -1.40902338121864004E-002, name = "PER_Q1BPF");
 O06W_Q1A_Q1B = Drift(L = 0.400595774121126, name = "O06W_Q1A_Q1B");
-PBR_Q1APF = LineElement(class="Patch (Unsupported)",  name = "PBR_Q1APF");
-PBT_Q1APF = LineElement(class="Patch (Unsupported)",  name = "PBT_Q1APF");
+PBR_Q1APF = LineElement(class="Patch", dy_rot =  6.76920671694013036E-003, name = "PBR_Q1APF");
+PBT_Q1APF = LineElement(class="Patch", dx =  4.05191841125844988E-003, name = "PBT_Q1APF");
 Q1APF = Quadrupole(L = 1.46, K1 = -0.0905816130794057, name = "Q1APF");
-PET_Q1APF = LineElement(class="Patch (Unsupported)",  name = "PET_Q1APF");
-PER_Q1APF = LineElement(class="Patch (Unsupported)",  name = "PER_Q1APF");
+PET_Q1APF = LineElement(class="Patch", dx = -1.46541743061257002E-002, name = "PET_Q1APF");
+PER_Q1APF = LineElement(class="Patch", dy_rot = -7.98771680129672923E-003, name = "PER_Q1APF");
 O06W_B0A_Q1A = Drift(L = 0.400625972111453, name = "O06W_B0A_Q1A");
-PBR_B0APF = LineElement(class="Patch (Unsupported)",  name = "PBR_B0APF");
-PBT_B0APF = LineElement(class="Patch (Unsupported)",  name = "PBT_B0APF");
-B0APF = SBend(L = 0.6, name = "B0APF");
-PET_B0APF = LineElement(class="Patch (Unsupported)",  name = "PET_B0APF");
-PER_B0APF = LineElement(class="Patch (Unsupported)",  name = "PER_B0APF");
+PBR_B0APF = LineElement(class="Patch", dy_rot =  6.95370413729287998E-003, name = "PBR_B0APF");
+PBT_B0APF = LineElement(class="Patch", dx =  3.55265096116320987E-003, name = "PBT_B0APF");
+B0APF = SBend(L = 0.6, g = 0, K0 = -3.5963367260481872E-03, name = "B0APF");
+PET_B0APF = LineElement(class="Patch", dx = -7.07734721058385016E-003, name = "PET_B0APF");
+PER_B0APF = LineElement(class="Patch", dy_rot = -4.79514821232049013E-003, name = "PER_B0APF");
 O06W_B0_B0A = Drift(L = 0.90135549892096, name = "O06W_B0_B0A");
-PB_B0PF = LineElement(class="Patch (Unsupported)",  name = "PB_B0PF");
-B0PF = SBend(L = 1.2, K1 = -0.008854545281644113, name = "B0PF");
-PE_B0PF = LineElement(class="Patch (Unsupported)",  name = "PE_B0PF");
+PB_B0PF = LineElement(class="Patch",  dy_rot =  2.67043931616362008E-002,
+  dx = -3.02264219559300988E-002, name = "PB_B0PF");
+B0PF = SBend(L = 1.2, g = 0, K0 = -1.2908091028653477E-03, K1 = -0.008854545281644113, name = "B0PF");
+PE_B0PF = LineElement(class="Patch", dy_rot = -2.50000000000000014E-002,
+  dx = -7.49049089865311052E-004, name = "PE_B0PF");
 D1_PF = Drift(L = 3.8024379395738, name = "D1_PF");
-PB_SOL_F = LineElement(class="Patch (Unsupported)",  name = "PB_SOL_F");
+PB_SOL_F = LineElement(class="Patch", dy_rot =  2.50000000000000014E-002,
+  dx = -4.99947918294246993E-002, name = "PB_SOL_F");
 STAR_DETECT_F = Solenoid(L = 2.0, name = "STAR_DETECT_F");
-PE_SOL_F = LineElement(class="Patch (Unsupported)",  name = "PE_SOL_F");
+PE_SOL_F = LineElement(class="Patch", dy_rot = -2.5e-2, name = "PE_SOL_F");
+t_patch = LineElement(class="Patch", dt = 4.80067853E-12, name = "t_patch");
 IP6W = LineElement(class="Marker",  name = "IP6W");
 
 #-------------------------------------------------------
@@ -2030,7 +2035,7 @@ IP6W = LineElement(class="Marker",  name = "IP6W");
 # Lattice lines
 
 
-HSR_HI_N = Beamline([IP6D, PB_SOL_R, STAR_DETECT_R, PE_SOL_R, O06D_SOL_Q1A, Q1APR, 
+hsr = Beamline([IP6D, PB_SOL_R, STAR_DETECT_R, PE_SOL_R, O06D_SOL_Q1A, Q1APR, 
   O06D_Q1A_Q1B, Q1BPR, O06D_Q1B_Q2, Q2PR, O06D_Q2_Q3, H6_Q3, OH6_WQ_SPC, H6_QS3, H6_TV3, 
   O_CRAB_MAG, O_CRAB_IP6R, OFLQ2A, H6_Q04, OCQ2, H6_COR04, OCFL2, O6_45, OCFL, H6_COR05, 
   OCQ, H6_Q05, OQS, H6_TQ05, OSB, OBFL, OBELABI, OD5OFL, H6_DH01, OSB4C, H6_TQ06, OQS4, 
@@ -2277,3 +2282,4 @@ HSR_HI_N = Beamline([IP6D, PB_SOL_R, STAR_DETECT_R, PE_SOL_R, O06D_SOL_Q1A, Q1AP
   PER_B0APF, O06W_B0_B0A, PB_B0PF, B0PF, PE_B0PF, D1_PF, PB_SOL_F, STAR_DETECT_F, PE_SOL_F, 
   IP6W], Brho_ref = 400.0);
 
+foreach(t->t.tracking_method=BmadStandard(), hsr.line)
