@@ -14,15 +14,16 @@
           error("Element is already in a beamline")
         else
           if isnothing(unique_name_suffix)
-            error("Duplicate elements found in beamline, but unique_name_suffix = nothing")
+            error("Duplicate elements found in beamline, but `unique_name_suffix` is `nothing`")
           else
-            name = line[i].name
+            name = getproperty(line[i], :name)
             duplicates[name] = get(duplicates, name, 1) + 1
             if duplicates[name] == 2
               push!(originals, Core.eval(Main, :($(Symbol(name)).beamline_index)))
             end
             newname = string(name, unique_name_suffix, duplicates[name])
             line[i] = deepcopy_no_beamline(line[i])
+            setproperty!(line[i], :name, newname)
           end
         end
       end
@@ -32,8 +33,10 @@
 
     if !isnothing(unique_name_suffix)
       for i in originals
-              newname = string(line[i].name, unique_name_suffix, 1)
-              Core.eval(Main, :($(Symbol(line[i].name)) = $(nothing)))
+        name = getproperty(line[i], :name)
+        newname = string(name, unique_name_suffix, 1)
+        setproperty!(line[i], :name, newname)
+        Core.eval(Main, :($(Symbol(name)) = $(nothing)))
       end
     end
     

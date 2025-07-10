@@ -11,6 +11,7 @@ export MattStandard,
        PatchParams,
        BendParams,
        RFParams,
+       SnakeParams,
        BMultipole,
        Drift,
        Solenoid,
@@ -27,6 +28,7 @@ export MattStandard,
        Beamline,
        Controller,
        Patch,
+       Snake,
        set!,
 
        deepcopy_no_beamline,
@@ -68,6 +70,7 @@ include("bend.jl")
 include("control.jl")
 include("alignment.jl")
 include("patch.jl")
+include("spinrot.jl")
 include("keymaps.jl")
 include("macros.jl")
 include("bits/bitsparams.jl")

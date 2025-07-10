@@ -74,6 +74,7 @@ HKicker(; kwargs...)    = LineElement(; class="HKicker", kwargs...)
 VKicker(; kwargs...)    = LineElement(; class="VKicker", kwargs...)
 RFCavity(; kwargs...)   = LineElement(; class="RFCavity", kwargs...)
 Patch(; kwargs...)      = LineElement(; class="Patch", kwargs...)
+Snake(; kwargs...)      = LineElement(; class="Snake", kwargs...)
 
 # The SBend is special:
 function SBend(; kwargs...)

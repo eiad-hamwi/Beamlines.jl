@@ -59,6 +59,9 @@ const PROPERTIES_MAP = Dict{Symbol,Type{<:AbstractParams}}(
   :phi0 => RFParams,
   :harmon_master => RFParams,
   :L_ring => RFParams,
+
+  :snake_axis => SnakeParams,
+  :snake_angle => SnakeParams,
 )
 
 const PARAMS_MAP = Dict{Symbol,Type{<:AbstractParams}}(
@@ -69,6 +72,7 @@ const PARAMS_MAP = Dict{Symbol,Type{<:AbstractParams}}(
   :AlignmentParams => AlignmentParams,
   :PatchParams => PatchParams,
   :RFParams => RFParams,
+  :SnakeParams => SnakeParams,
 )
 
 
