@@ -1,6 +1,6 @@
 @kwdef mutable struct SnakeParams{T<:Number} <: AbstractParams
     snake_axis::Vector{T} = Float32[0.0, 0.0, 0.0]
-    snake_angle::T = Float32(0.0)
+    snake_angle::T        = Float32(0.0)
     function SnakeParams(snake_axis, snake_angle)
         return new{promote_type(eltype(snake_axis), typeof(snake_angle))}(snake_axis, snake_angle)
     end
